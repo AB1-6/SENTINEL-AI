@@ -1,0 +1,54 @@
+<svg width="1280" height="360" viewBox="0 0 1280 360" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Sentinel AI 2.0 horizontal logo">
+  <defs>
+    <linearGradient id="h_stroke" x1="74" y1="38" x2="222" y2="266" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#66E3FF"/>
+      <stop offset="0.4" stop-color="#00C8FF"/>
+      <stop offset="1" stop-color="#3B82F6"/>
+    </linearGradient>
+    <linearGradient id="h_fill" x1="92" y1="64" x2="206" y2="238" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0B1730" stop-opacity="0.96"/>
+      <stop offset="1" stop-color="#08111F" stop-opacity="0.98"/>
+    </linearGradient>
+    <linearGradient id="h_text" x1="320" y1="120" x2="980" y2="232" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F8FAFC"/>
+      <stop offset="0.6" stop-color="#F8FAFC"/>
+      <stop offset="1" stop-color="#CFF7FF"/>
+    </linearGradient>
+    <filter id="h_glow" x="0" y="0" width="360" height="360" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="9" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0.00 0 0 0 0 0.78 0 0 0 0 1.00 0 0 0 0.42 0" result="g"/>
+      <feMerge>
+        <feMergeNode in="g"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <g filter="url(#h_glow)">
+    <circle cx="160" cy="180" r="114" fill="#00C8FF" fill-opacity="0.08"/>
+    <path d="M160 52L234 94V186L160 272L86 186V94L160 52Z" fill="url(#h_fill)" stroke="url(#h_stroke)" stroke-width="8" stroke-linejoin="round"/>
+    <path d="M160 72L216 104V178L160 244L104 178V104L160 72Z" fill="none" stroke="#66E3FF" stroke-opacity="0.34" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M160 94L200 118V172L160 222L120 172V118L160 94Z" fill="none" stroke="#3B82F6" stroke-opacity="0.14" stroke-width="1.6" stroke-dasharray="10 8"/>
+    <path d="M136 126H150M170 126H184M126 160H144M176 160H194M136 194H150M170 194H184" stroke="#66E3FF" stroke-opacity="0.42" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M160 118V148" stroke="#F8FAFC" stroke-opacity="0.56" stroke-width="3.4" stroke-linecap="round"/>
+    <path d="M145.5 146C145.5 138.544 151.544 132.5 159 132.5H161C168.456 132.5 174.5 138.544 174.5 146V158H145.5V146Z" stroke="#F8FAFC" stroke-opacity="0.64" stroke-width="2.6" stroke-linejoin="round"/>
+    <path d="M149 158H171C172.657 158 174 159.343 174 161V171C174 172.657 172.657 174 171 174H149C147.343 174 146 172.657 146 171V161C146 159.343 147.343 158 149 158Z" stroke="#00C8FF" stroke-opacity="0.72" stroke-width="2.4"/>
+    <path d="M153 167C153 164.239 155.239 162 158 162C160.761 162 163 164.239 163 167C163 168.829 162.013 170.426 160.5 171.289V173H155.5V171.289C153.987 170.426 153 168.829 153 167Z" fill="#66E3FF"/>
+
+    <path d="M312 128H550C555.523 128 560 132.477 560 138V166C560 171.523 555.523 176 550 176H312V128Z" fill="#0B1730" fill-opacity="0.42"/>
+    <path d="M312 192H842C847.523 192 852 196.477 852 202V230C852 235.523 847.523 240 842 240H312V192Z" fill="#00C8FF" fill-opacity="0.05"/>
+
+    <path d="M322 170H352V126H382V170H412V196H382V240H352V196H322V170Z" fill="url(#h_text)"/>
+    <path d="M432 130H458V240H432V130Z" fill="url(#h_text)"/>
+    <path d="M480 130H506V240H480V130Z" fill="url(#h_text)"/>
+    <path d="M530 130H592L617 184L592 240H555L537 206H530V240H504V130H530ZM530 184H581L589 170L581 152H530V184Z" fill="url(#h_text)"/>
+    <path d="M632 130H658V240H632V130Z" fill="url(#h_text)"/>
+    <path d="M680 130H706V240H680V130Z" fill="url(#h_text)"/>
+    <path d="M730 130H754L795 206V130H821V240H797L756 164V240H730V130Z" fill="url(#h_text)"/>
+    <path d="M844 130H870V240H844V130Z" fill="url(#h_text)"/>
+
+    <path d="M322 256H868" stroke="#3B82F6" stroke-opacity="0.24" stroke-width="2" stroke-linecap="round"/>
+    <path d="M322 288H756" stroke="#66E3FF" stroke-opacity="0.28" stroke-width="1.8" stroke-linecap="round"/>
+    <text x="322" y="296" fill="#66E3FF" font-family="Segoe UI, SF Pro Display, Inter, system-ui, sans-serif" font-size="26" font-weight="500" letter-spacing="0.34em">ENTERPRISE AI ASSISTANT</text>
+  </g>
+</svg>

@@ -1,0 +1,63 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Sentinel AI 2.0 primary logo">
+  <defs>
+    <linearGradient id="p_stroke" x1="142" y1="104" x2="372" y2="408" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#66E3FF"/>
+      <stop offset="0.38" stop-color="#00C8FF"/>
+      <stop offset="1" stop-color="#3B82F6"/>
+    </linearGradient>
+    <linearGradient id="p_edge" x1="165" y1="126" x2="347" y2="388" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#B8F5FF" stop-opacity="0.95"/>
+      <stop offset="0.55" stop-color="#66E3FF" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#3B82F6" stop-opacity="0.18"/>
+    </linearGradient>
+    <linearGradient id="p_fill" x1="180" y1="146" x2="334" y2="366" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0B1730" stop-opacity="0.96"/>
+      <stop offset="0.55" stop-color="#08111F" stop-opacity="0.96"/>
+      <stop offset="1" stop-color="#0C1830" stop-opacity="0.98"/>
+    </linearGradient>
+    <radialGradient id="p_coreGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(256 258) rotate(90) scale(142)">
+      <stop offset="0" stop-color="#66E3FF" stop-opacity="0.35"/>
+      <stop offset="0.55" stop-color="#00C8FF" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#08111F" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="p_ringGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(256 256) rotate(90) scale(190)">
+      <stop offset="0" stop-color="#00C8FF" stop-opacity="0.12"/>
+      <stop offset="0.7" stop-color="#00C8FF" stop-opacity="0.05"/>
+      <stop offset="1" stop-color="#08111F" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="p_glow" x="0" y="0" width="512" height="512" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="9" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0.00 0 0 0 0 0.78 0 0 0 0 1.00 0 0 0 0.42 0" result="a"/>
+      <feMerge>
+        <feMergeNode in="a"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="p_soft" x="128" y="88" width="256" height="324" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="4.5"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#p_glow)">
+    <circle cx="256" cy="256" r="186" fill="url(#p_ringGlow)"/>
+    <path d="M256 82L372 150V286L256 430L140 286V150L256 82Z" fill="url(#p_fill)" stroke="url(#p_stroke)" stroke-width="10" stroke-linejoin="round"/>
+    <path d="M256 102L354 160V279L256 401L158 279V160L256 102Z" fill="none" stroke="url(#p_edge)" stroke-width="2.5" stroke-linejoin="round"/>
+    <path d="M256 124L336 170V271L256 373L176 271V170L256 124Z" fill="none" stroke="#66E3FF" stroke-opacity="0.28" stroke-width="1.8" stroke-linejoin="round" stroke-dasharray="12 8"/>
+    <path d="M202 184H228M284 184H310M188 252H216M296 252H324M202 320H228M284 320H310" stroke="#66E3FF" stroke-opacity="0.48" stroke-width="3" stroke-linecap="round"/>
+    <path d="M188 208L220 208L235 223M324 208L292 208L277 223M178 280H212L229 262M334 280H300L283 262M194 304H226L240 292M318 304H286L272 292" stroke="#00C8FF" stroke-opacity="0.32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <ellipse cx="256" cy="254" rx="88" ry="96" fill="url(#p_coreGlow)" filter="url(#p_soft)"/>
+    <path d="M202 188C202 182.477 206.477 178 212 178H231C236.523 178 241 182.477 241 188V192H202V188Z" fill="#F8FAFC" fill-opacity="0.12"/>
+    <path d="M220 186H230C234.418 186 238 189.582 238 194V218H212V194C212 189.582 215.582 186 220 186Z" stroke="#F8FAFC" stroke-opacity="0.66" stroke-width="3.2" stroke-linejoin="round"/>
+    <path d="M222 218H228C230.209 218 232 219.791 232 222V230C232 232.209 230.209 234 228 234H222C219.791 234 218 232.209 218 230V222C218 219.791 219.791 218 222 218Z" fill="#00C8FF" fill-opacity="0.9"/>
+    <path d="M221 144C221 140.686 223.686 138 227 138H285C288.314 138 291 140.686 291 144V158C291 161.314 288.314 164 285 164H227C223.686 164 221 161.314 221 158V144Z" fill="none" stroke="#66E3FF" stroke-opacity="0.2" stroke-width="2"/>
+    <path d="M236 146C236 142.686 238.686 140 242 140H270C273.314 140 276 142.686 276 146V152C276 155.314 273.314 158 270 158H242C238.686 158 236 155.314 236 152V146Z" fill="#66E3FF" fill-opacity="0.16"/>
+    <path d="M248 214C248 207.373 253.373 202 260 202H262C271.389 202 278 209.611 278 219C278 227.637 271.637 234.614 263.5 236.685V246H251.5V236.685C245.154 234.909 240 229.308 240 222C240 218.134 241.44 214.605 244.064 211.979C246.687 209.353 250.216 207.913 254.082 207.913C256.701 207.913 258.599 208.28 260.5 209.25" stroke="#F8FAFC" stroke-opacity="0.88" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M250 240H274C277.314 240 280 242.686 280 246V254C280 257.314 277.314 260 274 260H250C246.686 260 244 257.314 244 254V246C244 242.686 246.686 240 250 240Z" stroke="#00C8FF" stroke-width="3.5" stroke-linejoin="round"/>
+    <path d="M258 247C260.761 247 263 249.239 263 252C263 253.733 262.126 255.264 260.789 256.179V260H255.211V256.179C253.874 255.264 253 253.733 253 252C253 249.239 255.239 247 258 247Z" fill="#66E3FF"/>
+    <path d="M256 266L256 270M256 274L256 278" stroke="#F8FAFC" stroke-opacity="0.66" stroke-width="2.8" stroke-linecap="round"/>
+    <circle cx="220" cy="158" r="2.5" fill="#66E3FF" fill-opacity="0.8"/>
+    <circle cx="304" cy="166" r="2.5" fill="#66E3FF" fill-opacity="0.8"/>
+    <circle cx="316" cy="314" r="2.5" fill="#66E3FF" fill-opacity="0.8"/>
+    <circle cx="196" cy="324" r="2.5" fill="#66E3FF" fill-opacity="0.8"/>
+  </g>
+</svg>

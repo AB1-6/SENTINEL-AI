@@ -1,0 +1,97 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources 4 0 R /Contents 5 0 R >>
+endobj
+4 0 obj
+<< /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> /F2 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >> >> >>
+endobj
+5 0 obj
+<< /Length 3171 >>
+stream
+BT /F1 10 Tf 36 750 Td 14 TL
+
+/F2 14 Tf (SENTINEL AI 2.0 - ENTERPRISE SECURITY ARCHITECTURE GUIDE) Tj T* /F1 10 Tf
+(=========================================================) Tj T*
+() Tj T*
+
+/F2 11 Tf (1. EXECUTIVE SUMMARY & CORE PURPOSE) Tj T* /F1 10 Tf
+(----------------------------------) Tj T*
+(Sentinel AI 2.0 is a state-of-the-art Enterprise Zero-Trust AI Firewall & Security Gateway) Tj T*
+(designed to sit between corporate users and LLMs \(Google Gemini 2.5 / Gemma\).) Tj T*
+() Tj T*
+(Key Purpose:) Tj T*
+(- Accidental Data Exposure: Prevents employees from leaking confidential PII & code.) Tj T*
+(- Prompt Injection & Jailbreaks: Scans incoming prompts in real-time at 100Hz, blocking) Tj T*
+(  security bypass attempts, system prompt extraction, and malicious code payloads.) Tj T*
+() Tj T*
+() Tj T*
+
+/F2 11 Tf (2. ACCESS CONTROL & ROLE PERSONAS) Tj T* /F1 10 Tf
+(---------------------------------) Tj T*
+(1\) Super Administrator: anlinpunneli@gmail.com / Anlin20#69 \(Level 5 Full Access\)) Tj T*
+(2\) Security Analyst: alex.mercer@sentinel.local / Sentinel123! \(SecOps Audit Mode\)) Tj T*
+(3\) Standard Employee: employee@sentinel.local / Sentinel123! \(Standard User\)) Tj T*
+() Tj T*
+() Tj T*
+
+/F2 11 Tf (3. CODE-BASED ATTACK DEFENSE \(4-LAYER BARRIER\)) Tj T* /F1 10 Tf
+(----------------------------------------------) Tj T*
+(Layer 1: AST Payload Scanner) Tj T*
+(- Intercepts eval\(\), exec\(\), <script>, DROP TABLE, and system\("rm -rf"\) signatures prior) Tj T*
+(  to LLM submission. Spikes risk score to 0.98 CRITICAL.) Tj T*
+() Tj T*
+(Layer 2: Output XSS Sanitization) Tj T*
+(- Frontend MarkdownRenderer dynamically escapes raw HTML and script tags into harmless plain text.) Tj T*
+() Tj T*
+(Layer 3: Parameterized Data Queries) Tj T*
+(- Backend storage layers enforce strict object parameterization, rendering SQL and NoSQL injections ineffective.) Tj T*
+() Tj T*
+(Layer 4: Sandboxed Code Execution) Tj T*
+(- Generated code snippets render in static, syntax-highlighted blocks strictly for review.) Tj T*
+() Tj T*
+() Tj T*
+
+/F2 11 Tf (4. EXTERNAL OUTSIDE CYBER ATTACK DEFENSE) Tj T* /F1 10 Tf
+(----------------------------------------) Tj T*
+(Barrier 1: JWT Bearer Token Gatekeeper) Tj T*
+(- Direct REST API calls to /api/chat missing valid 256-bit signed JWT tokens are rejected with 401.) Tj T*
+() Tj T*
+(Barrier 2: Level 5 System Isolation \(Lockdown\)) Tj T*
+(- 1-click Super Admin Lockdown mode freezes all non-admin external API endpoints across the server.) Tj T*
+() Tj T*
+(Barrier 3: Strict CORS & Origin Control) Tj T*
+(- Enforces Cross-Origin Resource Sharing boundaries. Unauthorized external website requests are dropped.) Tj T*
+() Tj T*
+(Barrier 4: TLS/SSL HTTPS Tunneling) Tj T*
+(- Public traffic streams through encrypted TLS endpoints with strict JSON request body caps.) Tj T*
+() Tj T*
+() Tj T*
+
+/F2 11 Tf (5. LIVE ACCESS ENDPOINTS) Tj T* /F1 10 Tf
+(------------------------) Tj T*
+(- Live Public Website: https://74a23aa5b2b126.lhr.life) Tj T*
+(- Local Network Wi-Fi: http://192.168.18.86:5173/) Tj T*
+(- Local Host Web App: http://localhost:5173/) Tj T*
+(- Super Admin Credentials: anlinpunneli@gmail.com / Anlin20#69) Tj T*
+ET
+endstream
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000214 00000 n 
+0000000342 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+3621
+%%EOF
