@@ -2,6 +2,7 @@ import { createContext, useContext, useMemo } from 'react';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { demoUser } from '@/services/mockData';
 import api, { safeRequest } from '@/services/api';
+import { isUserSuspended, getUser } from '@/services/userSecurityService';
 
 const AuthContext = createContext(null);
 
@@ -42,10 +43,14 @@ export function AuthProvider({ children }) {
     isAuthenticated: false,
   });
 
-
   async function login({ email, password }) {
     const cleanEmail = (email || '').trim().toLowerCase();
     const cleanPassword = (password || '').trim();
+
+    // Zero-Trust Check: Is this account suspended due to 3 prompt violations?
+    if (isUserSuspended(cleanEmail)) {
+      throw new Error('ACCOUNT_SUSPENDED: This account has been quarantined due to 3 Zero-Trust Security Violations. Only Super Administrator (anlinpunneli@gmail.com) can readmit.');
+    }
 
     const result = await safeRequest(
       () => api.post('/auth/login', { email: cleanEmail, password: cleanPassword }),
@@ -53,9 +58,11 @@ export function AuthProvider({ children }) {
     );
 
     if (result?.token && result?.user) {
-      setAuthState({ user: result.user, token: result.token, isAuthenticated: true });
+      const secRecord = getUser(cleanEmail);
+      const enrichedUser = { ...result.user, strikes: secRecord?.strikes || 0, status: secRecord?.status || 'Active' };
+      setAuthState({ user: enrichedUser, token: result.token, isAuthenticated: true });
       window.localStorage.setItem('sentinel.token', result.token);
-      return result.user;
+      return enrichedUser;
     }
 
     const matchedRole = Object.values(rolePresets).find(
@@ -63,9 +70,11 @@ export function AuthProvider({ children }) {
     );
 
     if (matchedRole) {
-      setAuthState({ user: matchedRole.user, token: 'demo-token', isAuthenticated: true });
+      const secRecord = getUser(cleanEmail);
+      const enrichedUser = { ...matchedRole.user, strikes: secRecord?.strikes || 0, status: secRecord?.status || 'Active' };
+      setAuthState({ user: enrichedUser, token: 'demo-token', isAuthenticated: true });
       window.localStorage.setItem('sentinel.token', 'demo-token');
-      return matchedRole.user;
+      return enrichedUser;
     }
 
     throw new Error('Invalid credentials');

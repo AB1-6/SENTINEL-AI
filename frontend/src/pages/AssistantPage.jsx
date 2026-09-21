@@ -9,12 +9,14 @@ import { classifyPrompt, generateResponse, generateLiveGeminiResponse } from '@/
 import { chatHistoryService } from '@/services/chatHistoryService';
 import { useToast } from '@/contexts/ToastContext';
 import { useAiProvider } from '@/contexts/AiProviderContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { recordViolation, getUser } from '@/services/userSecurityService';
 import { playClickSound, playScanSound, playErrorSound, playChimeSound } from '@/utils/soundEffects';
 import { 
   Sparkles, Key, Check, ExternalLink, X, Cpu, ShieldCheck, 
   ShieldAlert, Shield, AlertTriangle, Terminal, ChevronRight, 
   Copy, RotateCcw, Paperclip, Send, Sliders, Zap, Lock, Eye, FileText,
-  Plus, History, Download, MessageSquare
+  Plus, History, Download, MessageSquare, LogOut
 } from 'lucide-react';
 import { redactPII } from '@/utils/piiRedactor';
 
@@ -67,6 +69,7 @@ const ATTACK_PRESETS = [
 
 export default function AssistantPage() {
   const navigate = useNavigate();
+  const { user: currentUser, logout } = useAuth();
   const [messages, setMessages] = useState(initialMessages);
   const [sessionId, setSessionId] = useState(() => {
     return chatHistoryService.getActiveThreadId() || `session-${Date.now()}`;
@@ -78,6 +81,23 @@ export default function AssistantPage() {
   const [currentScore, setCurrentScore] = useState(4);
   const [securityPolicy, setSecurityPolicy] = useState('Strict'); // 'Strict' | 'Balanced' | 'Audit Only'
   const [copiedIndex, setCopiedIndex] = useState(null);
+
+  // Quarantine Modal & Auto-logout state (3-Strike Policy)
+  const [quarantineModal, setQuarantineModal] = useState(null);
+  const [logoutCountdown, setLogoutCountdown] = useState(5);
+
+  useEffect(() => {
+    if (!quarantineModal) return;
+    if (logoutCountdown <= 0) {
+      logout();
+      navigate('/login', { replace: true });
+      return;
+    }
+    const timer = setTimeout(() => {
+      setLogoutCountdown((prev) => prev - 1);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [quarantineModal, logoutCountdown, logout, navigate]);
   
   // Guardrail Telemetry State
   const [lastTelemetry, setLastTelemetry] = useState({
@@ -268,13 +288,33 @@ export default function AssistantPage() {
     // Stage 3 & 4: Zero-Trust Gateway Enforcement
     if (isBlocked) {
       playErrorSound();
-      pushToast('🚨 Zero-Trust Enforcement: Prompt blocked before reaching LLM', 'danger');
+
+      const userEmail = currentUser?.email || 'employee@sentinel.local';
+      const violResult = recordViolation(userEmail, processedPrompt, classification);
+
+      if (violResult.isSuperAdmin) {
+        pushToast('🚨 Zero-Trust Interception: Prompt blocked before reaching LLM (Super Admin Active)', 'danger');
+      } else if (violResult.suspended) {
+        pushToast('🛑 Zero-Trust Quarantine: 3/3 Violations Reached! Account Locked.', 'danger');
+        setQuarantineModal({
+          user: currentUser,
+          prompt: processedPrompt,
+          label: classification.label,
+          strikes: violResult.strikes,
+        });
+        setLogoutCountdown(5);
+      } else if (violResult.strikes === 2) {
+        pushToast('🚨 Strike 2/3 Recorded! Critical Warning: Next violation will trigger auto-quarantine.', 'danger');
+      } else {
+        pushToast('⚠️ Strike 1/3 Recorded: Adversarial prompt intercepted by Zero-Trust gateway.', 'warning');
+      }
+
       setMessages((current) => {
         const next = [
           ...current, 
           { 
             role: 'assistant', 
-            content: `### 🛡️ Request Blocked by Zero-Trust Gateway\n\n**Security Reason**: Potential prompt injection or adversarial jailbreak pattern detected.\n- **Risk Score**: \`${riskScore}/100\`\n- **Classification**: \`${classification.label}\`\n- **Policy Action**: Zero-Trust gateway intercepted request prior to neural model transmission.\n\n*Incident has been logged to the immutable SecOps audit trail.*`,
+            content: `### 🛡️ Request Blocked by Zero-Trust Gateway\n\n**Security Reason**: Potential prompt injection or adversarial jailbreak pattern detected.\n- **Risk Score**: \`${riskScore}/100\`\n- **Classification**: \`${classification.label}\`\n- **Zero-Trust Strikes**: \`${violResult.strikes || 1}/3 Violations\` ${violResult.suspended ? '— 🚨 **ACCOUNT SUSPENDED**' : '— Warning Recorded'}\n- **Policy Action**: Zero-Trust gateway intercepted request prior to neural model transmission.\n\n${violResult.suspended ? '**CRITICAL NOTICE**: Your account has exceeded the 3-violation threshold and has been suspended. Only a Super Administrator (anlinpunneli@gmail.com) can readmit this account.' : '*Incident has been logged to the immutable SecOps audit trail.*'}`,
             meta: {
               verified: false,
               blocked: true,
@@ -843,6 +883,74 @@ export default function AssistantPage() {
 
         </div>
       </div>
+
+      {/* 3-Strike Zero-Trust Account Quarantine Modal */}
+      {quarantineModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-in fade-in duration-300">
+          <div className="w-full max-w-lg rounded-3xl border border-red-500/50 bg-[#09050d] p-7 shadow-[0_0_80px_rgba(239,68,68,0.35)] relative overflow-hidden">
+            <div className="absolute -top-24 -right-24 w-48 h-48 bg-red-500/15 rounded-full blur-3xl pointer-events-none" />
+            
+            <div className="flex items-center gap-3 border-b border-red-500/20 pb-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-500/20 text-red-400 shadow-[0_0_20px_rgba(239,68,68,0.3)] shrink-0">
+                <AlertTriangle className="h-7 w-7 animate-pulse" />
+              </div>
+              <div>
+                <span className="text-[10px] font-mono tracking-widest text-red-400 font-bold uppercase">
+                  ZERO-TRUST ENFORCEMENT LEVEL 5
+                </span>
+                <h3 className="font-display text-lg font-bold text-white tracking-wide">
+                  ACCOUNT QUARANTINED — ACCESS REVOKED
+                </h3>
+              </div>
+            </div>
+
+            <div className="py-5 space-y-3">
+              <div className="rounded-2xl border border-red-500/20 bg-red-950/30 p-4 space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-400">Security Violations:</span>
+                  <span className="font-mono font-bold text-red-400">3 / 3 STRIKES (EXCEEDED)</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-400">Triggered Payload:</span>
+                  <span className="font-mono text-slate-200 truncate max-w-[240px]">
+                    "{quarantineModal.prompt}"
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-400">Classification:</span>
+                  <span className="font-mono font-bold text-amber-400">{quarantineModal.label}</span>
+                </div>
+              </div>
+
+              <p className="text-xs leading-relaxed text-slate-300">
+                Your enterprise session has been invalidated by the Sentinel AST Firewall. This account has been placed into isolation.
+              </p>
+
+              <div className="rounded-xl border border-cyan-500/20 bg-cyan-950/20 p-3 text-xs text-cyan-200">
+                <span className="font-semibold text-cyan-300">Reinstatement Procedure:</span> Only a designated Super Administrator (<code className="text-white font-mono bg-white/10 px-1.5 py-0.5 rounded">anlinpunneli@gmail.com</code>) can readmit your account from the <strong>User Management</strong> console.
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-2">
+              <div className="text-xs font-mono text-slate-400 flex items-center gap-1.5">
+                <span className="inline-block h-2 w-2 rounded-full bg-red-400 animate-ping" />
+                Auto-logging out in <strong className="text-white font-bold">{logoutCountdown}s</strong>
+              </div>
+
+              <button
+                onClick={() => {
+                  logout();
+                  navigate('/login', { replace: true });
+                }}
+                className="flex items-center gap-2 rounded-xl bg-red-500 hover:bg-red-600 text-white font-medium text-xs px-4 py-2.5 transition shadow-[0_0_15px_rgba(239,68,68,0.4)] cursor-pointer"
+              >
+                <LogOut className="h-3.5 w-3.5" />
+                Acknowledge & Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

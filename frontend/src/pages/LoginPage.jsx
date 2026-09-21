@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AuthLayout from '@/layouts/AuthLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
-import { ShieldCheck, ShieldAlert, User, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, User, Lock, ArrowRight, Eye, EyeOff, AlertTriangle } from 'lucide-react';
 import { playClickSound, playChimeSound, playErrorSound } from '@/utils/soundEffects';
+import { isUserSuspended, subscribeUserSecurity, getUser } from '@/services/userSecurityService';
 
 const ROLES = [
   {
@@ -45,15 +46,37 @@ export default function LoginPage() {
   const [form, setForm] = useState({ email: ROLES[0].email, password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [quarantineError, setQuarantineError] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    return subscribeUserSecurity(() => {
+      setRefreshKey((k) => k + 1);
+    });
+  }, []);
 
   const selectRolePreset = (role) => {
     playClickSound();
     setSelectedRole(role);
     setForm((curr) => ({ ...curr, email: role.email, password: '' }));
+    setQuarantineError(null);
   };
 
   async function handleSubmit(event) {
     event.preventDefault();
+    setQuarantineError(null);
+
+    // Pre-check for suspended status
+    if (isUserSuspended(form.email)) {
+      playErrorSound();
+      const secUser = getUser(form.email);
+      setQuarantineError(
+        `Access Quarantined: Account "${form.email}" has been locked after 3 Zero-Trust Security Violations. Only the Super Administrator (anlinpunneli@gmail.com) can readmit this account from the User Management console.`
+      );
+      pushToast('Access Quarantined: 3 Zero-Trust Violations recorded', 'danger');
+      return;
+    }
+
     if (!form.password.trim()) {
       playErrorSound();
       pushToast('Please enter your security password.', 'warning');
@@ -66,9 +89,14 @@ export default function LoginPage() {
       playChimeSound();
       pushToast(`Welcome back, ${user?.name || 'User'}! Session established.`, 'success');
       navigate('/');
-    } catch {
+    } catch (err) {
       playErrorSound();
-      pushToast('Authentication failed: Invalid Credentials', 'danger');
+      if (err.message?.includes('ACCOUNT_SUSPENDED')) {
+        setQuarantineError(err.message.replace('ACCOUNT_SUSPENDED: ', ''));
+        pushToast('Account Suspended: Zero-Trust Quarantined', 'danger');
+      } else {
+        pushToast('Authentication failed: Invalid Credentials', 'danger');
+      }
     } finally {
       setLoading(false);
     }
@@ -85,28 +113,42 @@ export default function LoginPage() {
           <div className="mt-4 grid gap-3 md:grid-cols-3">
             {ROLES.map((role) => {
               const isSelected = selectedRole.id === role.id;
+              const isSuspended = isUserSuspended(role.email);
               const Icon = role.icon;
               return (
                 <div
                   key={role.id}
                   onClick={() => selectRolePreset(role)}
                   className={`group relative cursor-pointer rounded-2xl border p-4 transition-all duration-200 ${
-                    isSelected
+                    isSuspended
+                      ? 'border-red-500/40 bg-red-950/20 shadow-[0_0_20px_rgba(239,68,68,0.15)]'
+                      : isSelected
                       ? 'border-cyan-400 bg-cyan-500/10 shadow-[0_0_30px_rgba(77,215,255,0.25)]'
                       : 'border-white/10 bg-[#07101d]/80 hover:border-cyan-400/40 hover:bg-white/5'
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 text-cyan-300">
+                    <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${isSuspended ? 'bg-red-500/10 text-red-400' : 'bg-white/5 text-cyan-300'}`}>
                       <Icon className="h-5 w-5" />
                     </div>
-                    {isSelected && <span className="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_10px_#4dd7ff]" />}
+                    {isSuspended ? (
+                      <span className="h-2 w-2 rounded-full bg-red-500 shadow-[0_0_10px_#ef4444]" />
+                    ) : isSelected ? (
+                      <span className="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_10px_#4dd7ff]" />
+                    ) : null}
                   </div>
 
                   <h3 className="mt-3 font-display font-semibold text-white text-sm">{role.title}</h3>
-                  <span className="mt-1 inline-block rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-mono font-medium text-slate-300">
-                    {role.badge}
-                  </span>
+                  {isSuspended ? (
+                    <span className="mt-1 inline-flex items-center gap-1 rounded-md border border-red-500/30 bg-red-500/10 px-2 py-0.5 text-[10px] font-mono font-bold text-red-400">
+                      <AlertTriangle className="h-2.5 w-2.5" />
+                      QUARANTINED (3/3)
+                    </span>
+                  ) : (
+                    <span className="mt-1 inline-block rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-mono font-medium text-slate-300">
+                      {role.badge}
+                    </span>
+                  )}
                   <p className="mt-2 text-[11px] leading-relaxed text-slate-400 line-clamp-2">{role.desc}</p>
                 </div>
               );
@@ -116,6 +158,27 @@ export default function LoginPage() {
 
         {/* Credentials Form */}
         <form onSubmit={handleSubmit} className="space-y-4 rounded-3xl border border-white/10 bg-[#07101d]/90 p-6 shadow-glass">
+          {quarantineError && (
+            <div className="rounded-2xl border border-red-500/40 bg-red-950/40 p-4 shadow-[0_0_20px_rgba(239,68,68,0.15)] animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="flex items-start gap-3">
+                <div className="rounded-xl bg-red-500/20 p-2 text-red-400 mt-0.5 shrink-0">
+                  <AlertTriangle className="h-5 w-5 animate-pulse" />
+                </div>
+                <div className="space-y-1">
+                  <h4 className="font-display font-semibold text-sm text-red-200 uppercase tracking-wider">
+                    Zero-Trust Security Lockdown: Account Quarantined
+                  </h4>
+                  <p className="text-xs text-red-300/90 leading-relaxed">
+                    {quarantineError}
+                  </p>
+                  <div className="pt-2 text-[11px] text-slate-400 font-mono">
+                    Requires Super Administrator clearance (<span className="text-cyan-300 font-semibold">anlinpunneli@gmail.com</span>) in User Management to reinstate access.
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="flex items-center justify-between border-b border-white/10 pb-3">
             <div className="flex items-center gap-2">
               <Lock className="h-4 w-4 text-cyan-400" />
@@ -133,7 +196,10 @@ export default function LoginPage() {
                 autoComplete="username"
                 className="mt-1.5 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-slate-500 outline-none focus:border-cyan-400/70"
                 value={form.email}
-                onChange={(e) => setForm((curr) => ({ ...curr, email: e.target.value }))}
+                onChange={(e) => {
+                  setForm((curr) => ({ ...curr, email: e.target.value }));
+                  setQuarantineError(null);
+                }}
                 placeholder="Enter enterprise email"
               />
             </label>
@@ -168,10 +234,25 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-electric px-5 py-3.5 font-medium text-black transition hover:brightness-110 disabled:opacity-60 neon-hover neon-border cursor-pointer"
+            className={`flex w-full items-center justify-center gap-2 rounded-2xl px-5 py-3.5 font-medium transition cursor-pointer ${
+              isUserSuspended(form.email)
+                ? 'bg-red-500/20 text-red-300 border border-red-500/40 hover:bg-red-500/30'
+                : 'bg-electric text-black hover:brightness-110 disabled:opacity-60 neon-hover neon-border'
+            }`}
           >
-            {loading ? 'Authenticating...' : `Sign In as ${selectedRole.title}`}
-            <ArrowRight className="h-4 w-4" />
+            {isUserSuspended(form.email) ? (
+              <>
+                <AlertTriangle className="h-4 w-4" />
+                Account Quarantined (Locked Out)
+              </>
+            ) : loading ? (
+              'Authenticating...'
+            ) : (
+              <>
+                Sign In as {selectedRole.title}
+                <ArrowRight className="h-4 w-4" />
+              </>
+            )}
           </button>
         </form>
       </div>

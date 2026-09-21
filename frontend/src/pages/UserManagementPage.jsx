@@ -1,9 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import GlassCard from '@/components/GlassCard';
 import SectionHeader from '@/components/SectionHeader';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
-import { users as initialUsers } from '@/services/mockData';
+import { 
+  getUsers, 
+  subscribeUserSecurity, 
+  readmitUser, 
+  simulateUserStrike, 
+  saveUsers 
+} from '@/services/userSecurityService';
 import { 
   Users, 
   UserPlus, 
@@ -18,7 +24,8 @@ import {
   X, 
   Check, 
   UserCheck, 
-  SlidersHorizontal 
+  SlidersHorizontal,
+  AlertTriangle
 } from 'lucide-react';
 import { playClickSound, playChimeSound, playErrorSound } from '@/utils/soundEffects';
 
@@ -36,7 +43,14 @@ export default function UserManagementPage() {
                   currentUser?.role === 'Super Administrator (RBAC)' || 
                   currentUser?.email === 'anlinpunneli@gmail.com';
 
-  const [userList, setUserList] = useState(initialUsers);
+  const [userList, setUserList] = useState(() => getUsers());
+
+  useEffect(() => {
+    return subscribeUserSecurity((updated) => {
+      setUserList(updated);
+    });
+  }, []);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL');
 
@@ -149,6 +163,29 @@ export default function UserManagementPage() {
     pushToast(`⚡ ${targetUser.name} has been promoted to Super Administrator (Level 5)!`, 'success');
   };
 
+  const handleReadmitUser = (targetUser) => {
+    if (!isAdmin) {
+      playErrorSound();
+      pushToast('Access Denied: Only Super Administrator can readmit suspended accounts', 'danger');
+      return;
+    }
+    playChimeSound();
+    readmitUser(targetUser.email, currentUser?.email || 'anlinpunneli@gmail.com');
+    pushToast(`🛡️ Account for "${targetUser.name}" successfully readmitted! Security strikes reset to 0/3. Access reinstated.`, 'success');
+  };
+
+  const handleSimulateStrike = (targetUser) => {
+    if (!isAdmin) return;
+    playClickSound();
+    const result = simulateUserStrike(targetUser.email);
+    if (result.suspended) {
+      playErrorSound();
+      pushToast(`🚨 3/3 Strikes Reached: ${targetUser.name} has been placed in quarantine!`, 'danger');
+    } else {
+      pushToast(`⚡ Test Strike ${result.strikes}/3 added to ${targetUser.name} [Demo Mode]`, 'warning');
+    }
+  };
+
   const handleToggleSuspend = (targetUser) => {
     if (!isAdmin) {
       playErrorSound();
@@ -163,18 +200,17 @@ export default function UserManagementPage() {
     }
 
     playClickSound();
-    const newStatus = targetUser.status?.includes('Suspended') ? 'Active' : 'Suspended (Locked)';
-
-    setUserList((prev) =>
-      prev.map((u) => (u.id === targetUser.id ? { ...u, status: newStatus } : u))
-    );
-
-    if (newStatus.includes('Suspended')) {
+    if (targetUser.status?.includes('Suspended') || (targetUser.strikes || 0) >= 3) {
+      readmitUser(targetUser.email, currentUser?.email || 'anlinpunneli@gmail.com');
+      playChimeSound();
+      pushToast(`🔓 Account ${targetUser.name} readmitted and unlocked.`, 'success');
+    } else {
+      const updatedUsers = userList.map((u) => 
+        u.id === targetUser.id ? { ...u, status: 'Suspended (Locked)', strikes: 3 } : u
+      );
+      saveUsers(updatedUsers);
       playErrorSound();
       pushToast(`🔒 Account ${targetUser.name} suspended and tokens revoked.`, 'danger');
-    } else {
-      playChimeSound();
-      pushToast(`🔓 Account ${targetUser.name} unlocked and restored.`, 'success');
     }
   };
 
@@ -275,21 +311,21 @@ export default function UserManagementPage() {
 
         <GlassCard className="p-4 flex items-center justify-between">
           <div>
-            <p className="text-xs font-mono text-slate-400">SECURITY ANALYSTS</p>
-            <p className="text-2xl font-bold text-amber-300 font-display mt-1">
-              {userList.filter((u) => u.role.includes('Analyst')).length}
+            <p className="text-xs font-mono text-slate-400">QUARANTINED (3 STRIKES)</p>
+            <p className="text-2xl font-bold text-red-400 font-display mt-1">
+              {userList.filter((u) => u.status?.includes('Suspended') || (u.strikes || 0) >= 3).length}
             </p>
           </div>
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-400/10 text-amber-300 border border-amber-400/20">
-            <ShieldCheck className="h-5 w-5" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-500/20 text-red-400 border border-red-500/40">
+            <AlertTriangle className="h-5 w-5 animate-pulse" />
           </div>
         </GlassCard>
 
         <GlassCard className="p-4 flex items-center justify-between">
           <div>
-            <p className="text-xs font-mono text-slate-400">EMPLOYEES</p>
+            <p className="text-xs font-mono text-slate-400">ACTIVE PERSONNEL</p>
             <p className="text-2xl font-bold text-emerald-300 font-display mt-1">
-              {userList.filter((u) => u.role.includes('Employee')).length}
+              {userList.filter((u) => !u.status?.includes('Suspended') && (u.strikes || 0) < 3).length}
             </p>
           </div>
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-400/10 text-emerald-300 border border-emerald-400/20">
@@ -339,22 +375,27 @@ export default function UserManagementPage() {
               <tr>
                 <th className="px-5 py-4 font-semibold">User</th>
                 <th className="px-5 py-4 font-semibold">Role</th>
+                <th className="px-5 py-4 font-semibold">Zero-Trust Strikes</th>
                 <th className="px-5 py-4 font-semibold">Status</th>
                 <th className="px-5 py-4 font-semibold text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {filteredUsers.map((u) => {
-                const isSuperAdminRole = u.role.includes('Admin');
-                const isSuspended = u.status?.includes('Suspended');
+                const isSuperAdminRole = u.role?.includes('Admin') || u.email === 'anlinpunneli@gmail.com';
+                const isSuspended = u.status?.includes('Suspended') || (u.strikes || 0) >= 3;
 
                 return (
                   <tr key={u.id} className="hover:bg-cyan-500/5 transition-colors">
                     {/* User Info */}
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center font-bold text-xs text-black shadow-md">
-                          {u.name.slice(0, 2).toUpperCase()}
+                        <div className={`h-10 w-10 rounded-full flex items-center justify-center font-bold text-xs shadow-md ${
+                          isSuspended 
+                            ? 'bg-gradient-to-br from-red-500 to-rose-700 text-white' 
+                            : 'bg-gradient-to-br from-cyan-400 to-blue-600 text-black'
+                        }`}>
+                          {u.name?.slice(0, 2).toUpperCase() || 'US'}
                         </div>
                         <div>
                           <div className="font-semibold text-white text-base flex items-center gap-2">
@@ -376,7 +417,7 @@ export default function UserManagementPage() {
                         className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1 text-xs font-medium border ${
                           isSuperAdminRole
                             ? 'border-cyan-400/40 bg-cyan-400/10 text-cyan-300'
-                            : u.role.includes('Analyst')
+                            : u.role?.includes('Analyst')
                             ? 'border-amber-400/40 bg-amber-400/10 text-amber-300'
                             : 'border-emerald-400/40 bg-emerald-400/10 text-emerald-300'
                         }`}
@@ -385,25 +426,91 @@ export default function UserManagementPage() {
                       </span>
                     </td>
 
+                    {/* Zero-Trust Strikes Indicator */}
+                    <td className="px-5 py-4">
+                      {isSuperAdminRole ? (
+                        <span className="text-[11px] font-mono text-cyan-400/80 bg-cyan-400/10 px-2 py-0.5 rounded-md border border-cyan-400/20">
+                          EXEMPT (OWNER)
+                        </span>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1">
+                            {[1, 2, 3].map((num) => {
+                              const filled = (u.strikes || 0) >= num;
+                              return (
+                                <span
+                                  key={num}
+                                  className={`h-2.5 w-2.5 rounded-full transition-all ${
+                                    filled
+                                      ? (u.strikes || 0) >= 3
+                                        ? 'bg-red-500 shadow-[0_0_8px_#ef4444]'
+                                        : 'bg-amber-400 shadow-[0_0_6px_#f59e0b]'
+                                      : 'bg-slate-800 border border-slate-700'
+                                  }`}
+                                />
+                              );
+                            })}
+                          </div>
+                          <span
+                            className={`text-xs font-mono font-bold ${
+                              (u.strikes || 0) >= 3
+                                ? 'text-red-400'
+                                : (u.strikes || 0) > 0
+                                ? 'text-amber-300'
+                                : 'text-slate-400'
+                            }`}
+                          >
+                            {(u.strikes || 0)}/3 Strikes
+                          </span>
+                        </div>
+                      )}
+                    </td>
+
                     {/* Status Badge */}
                     <td className="px-5 py-4">
                       <span
                         className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-mono ${
                           isSuspended
-                            ? 'bg-red-500/20 text-red-300 border border-red-500/40'
+                            ? 'bg-red-500/20 text-red-300 border border-red-500/40 shadow-[0_0_10px_rgba(239,68,68,0.2)]'
                             : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                         }`}
                       >
-                        <span className={`h-2 w-2 rounded-full ${isSuspended ? 'bg-red-400' : 'bg-emerald-400 animate-pulse'}`} />
-                        {u.status || 'Active'}
+                        <span className={`h-2 w-2 rounded-full ${isSuspended ? 'bg-red-400 animate-pulse' : 'bg-emerald-400'}`} />
+                        {isSuspended ? 'Suspended (Quarantined)' : u.status || 'Active'}
                       </span>
                     </td>
 
                     {/* Action Buttons */}
                     <td className="px-5 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
+                        {/* Readmit Account Button (Shown when user is suspended or 3 strikes) */}
+                        {isSuspended ? (
+                          <button
+                            onClick={() => handleReadmitUser(u)}
+                            disabled={!isAdmin}
+                            title="Readmit & Reinstate User Access"
+                            className="flex items-center gap-1.5 rounded-xl border border-emerald-400 bg-emerald-500/20 px-3 py-1.5 text-xs font-bold text-emerald-300 hover:bg-emerald-400 hover:text-black transition shadow-[0_0_15px_rgba(52,211,153,0.35)] cursor-pointer"
+                          >
+                            <ShieldCheck className="h-4 w-4" />
+                            <span>Readmit Account</span>
+                          </button>
+                        ) : null}
+
+                        {/* Test Strike Button (Demo mode for Super Admin testing) */}
+                        {!isSuperAdminRole && !isSuspended && (
+                          <button
+                            onClick={() => handleSimulateStrike(u)}
+                            disabled={!isAdmin}
+                            title="Simulate prompt violation strike on account (Demo Test)"
+                            className="flex items-center gap-1 rounded-xl border border-amber-400/30 bg-amber-400/10 px-2.5 py-1.5 text-xs font-mono text-amber-300 hover:bg-amber-400 hover:text-black transition cursor-pointer"
+                          >
+                            <AlertTriangle className="h-3 w-3" />
+                            <span>+Strike</span>
+                          </button>
+                        )}
+
                         {/* Promote to Admin Button */}
-                        {!isSuperAdminRole && (
+                        {!isSuperAdminRole && !isSuspended && (
                           <button
                             onClick={() => handlePromoteToAdmin(u)}
                             disabled={!isAdmin}
@@ -420,7 +527,7 @@ export default function UserManagementPage() {
                           onClick={() => handleToggleSuspend(u)}
                           disabled={!isAdmin}
                           title={isSuspended ? 'Unlock / Reactivate User' : 'Suspend & Lock User'}
-                          className={`rounded-xl border p-1.5 transition disabled:opacity-40 ${
+                          className={`rounded-xl border p-1.5 transition disabled:opacity-40 cursor-pointer ${
                             isSuspended
                               ? 'border-emerald-400/40 bg-emerald-400/10 text-emerald-300 hover:bg-emerald-400 hover:text-black'
                               : 'border-amber-400/30 bg-amber-400/10 text-amber-300 hover:bg-amber-400 hover:text-black'
