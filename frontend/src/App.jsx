@@ -27,15 +27,13 @@ const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
 
 function BootLoader({ children }) {
   const [booted, setBooted] = useState(false);
-  const { isAuthenticated } = useAuth();
+  const { logout } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
 
   const handleBootComplete = () => {
+    logout();
     setBooted(true);
-    if (!isAuthenticated && location.pathname !== '/login') {
-      navigate('/login', { replace: true });
-    }
+    navigate('/login', { replace: true });
   };
 
   return (

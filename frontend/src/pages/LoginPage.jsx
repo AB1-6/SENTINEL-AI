@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import AuthLayout from '@/layouts/AuthLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
-import { ShieldCheck, ShieldAlert, User, Key, ArrowRight, Lock } from 'lucide-react';
-import { playClickSound, playChimeSound } from '@/utils/soundEffects';
+import { ShieldCheck, ShieldAlert, User, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { playClickSound, playChimeSound, playErrorSound } from '@/utils/soundEffects';
 
 const ROLES = [
   {
@@ -12,7 +12,6 @@ const ROLES = [
     title: 'Super Administrator',
     badge: 'LEVEL 5 FULL ACCESS',
     email: 'anlinpunneli@gmail.com',
-    password: 'Anlin20#69',
     icon: ShieldAlert,
     color: 'amber',
     desc: 'Full RBAC control, zero-trust emergency lockdown, and JWT key rotation.',
@@ -22,7 +21,6 @@ const ROLES = [
     title: 'Security Analyst',
     badge: 'SECOPS READ/WRITE',
     email: 'alex.mercer@sentinel.local',
-    password: 'Sentinel123!',
     icon: ShieldCheck,
     color: 'cyan',
     desc: 'Threat telemetry stream inspection, prompt injection audit, and risk analytics.',
@@ -32,7 +30,6 @@ const ROLES = [
     title: 'Standard Employee',
     badge: 'STANDARD USER',
     email: 'employee@sentinel.local',
-    password: 'Sentinel123!',
     icon: User,
     color: 'emerald',
     desc: 'Access to AI Assistant chat, document intelligence, and history.',
@@ -45,17 +42,24 @@ export default function LoginPage() {
   const { pushToast } = useToast();
 
   const [selectedRole, setSelectedRole] = useState(ROLES[0]);
-  const [form, setForm] = useState({ email: ROLES[0].email, password: ROLES[0].password });
+  const [form, setForm] = useState({ email: ROLES[0].email, password: '' });
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const selectRolePreset = (role) => {
     playClickSound();
     setSelectedRole(role);
-    setForm({ email: role.email, password: role.password });
+    setForm((curr) => ({ ...curr, email: role.email, password: '' }));
   };
 
   async function handleSubmit(event) {
     event.preventDefault();
+    if (!form.password.trim()) {
+      playErrorSound();
+      pushToast('Please enter your security password.', 'warning');
+      return;
+    }
+
     setLoading(true);
     try {
       const user = await login(form);
@@ -63,6 +67,7 @@ export default function LoginPage() {
       pushToast(`Welcome back, ${user?.name || 'User'}! Session established.`, 'success');
       navigate('/');
     } catch {
+      playErrorSound();
       pushToast('Authentication failed: Invalid Credentials', 'danger');
     } finally {
       setLoading(false);
@@ -123,25 +128,47 @@ export default function LoginPage() {
             <label className="block">
               <span className="text-xs text-slate-300">Email Address</span>
               <input
-                className="mt-1.5 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-cyan-400/70"
+                type="email"
+                required
+                autoComplete="username"
+                className="mt-1.5 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-slate-500 outline-none focus:border-cyan-400/70"
                 value={form.email}
                 onChange={(e) => setForm((curr) => ({ ...curr, email: e.target.value }))}
+                placeholder="Enter enterprise email"
               />
             </label>
             <label className="block">
-              <span className="text-xs text-slate-300">Password</span>
-              <input
-                type="password"
-                className="mt-1.5 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-cyan-400/70"
-                value={form.password}
-                onChange={(e) => setForm((curr) => ({ ...curr, password: e.target.value }))}
-              />
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-300">Password</span>
+                <span className="text-[10px] text-slate-500 font-mono tracking-wider">ZERO-TRUST ENCRYPTED</span>
+              </div>
+              <div className="relative mt-1.5">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  autoComplete="current-password"
+                  className="w-full rounded-2xl border border-white/10 bg-white/5 pl-4 pr-11 py-3 text-sm text-white placeholder-slate-500 outline-none focus:border-cyan-400/70"
+                  value={form.password}
+                  onChange={(e) => setForm((curr) => ({ ...curr, password: e.target.value }))}
+                  placeholder="Enter security password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-cyan-400 transition"
+                  tabIndex={-1}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </label>
           </div>
 
           <button
+            type="submit"
             disabled={loading}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-electric px-5 py-3.5 font-medium text-black transition hover:brightness-110 disabled:opacity-60 neon-hover neon-border"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-electric px-5 py-3.5 font-medium text-black transition hover:brightness-110 disabled:opacity-60 neon-hover neon-border cursor-pointer"
           >
             {loading ? 'Authenticating...' : `Sign In as ${selectedRole.title}`}
             <ArrowRight className="h-4 w-4" />

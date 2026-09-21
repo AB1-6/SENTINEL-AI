@@ -44,29 +44,28 @@ export function AuthProvider({ children }) {
 
 
   async function login({ email, password }) {
+    const cleanEmail = (email || '').trim().toLowerCase();
+    const cleanPassword = (password || '').trim();
+
     const result = await safeRequest(
-      () => api.post('/auth/login', { email, password }),
+      () => api.post('/auth/login', { email: cleanEmail, password: cleanPassword }),
       null
     );
 
     if (result?.token && result?.user) {
       setAuthState({ user: result.user, token: result.token, isAuthenticated: true });
+      window.localStorage.setItem('sentinel.token', result.token);
       return result.user;
     }
 
     const matchedRole = Object.values(rolePresets).find(
-      (preset) => preset.email.toLowerCase() === (email || '').toLowerCase() && preset.password === password
+      (preset) => preset.email.toLowerCase() === cleanEmail && preset.password === cleanPassword
     );
 
     if (matchedRole) {
       setAuthState({ user: matchedRole.user, token: 'demo-token', isAuthenticated: true });
+      window.localStorage.setItem('sentinel.token', 'demo-token');
       return matchedRole.user;
-    }
-
-    // Default admin fallback for fast dev testing
-    if ((email || '').toLowerCase() === rolePresets.admin.email.toLowerCase()) {
-      setAuthState({ user: demoUser, token: 'demo-token', isAuthenticated: true });
-      return demoUser;
     }
 
     throw new Error('Invalid credentials');

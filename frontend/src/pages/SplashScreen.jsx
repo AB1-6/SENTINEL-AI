@@ -16,34 +16,26 @@ export default function SplashScreen({ onComplete }) {
   const [stageIndex, setStageIndex] = useState(0);
 
   useEffect(() => {
-    // If already booted in this browser session, skip immediately
-    if (sessionStorage.getItem('sentinel_booted') === 'true') {
-      if (onComplete) onComplete();
-      return;
-    }
-
     const timer = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) {
           clearInterval(timer);
-          sessionStorage.setItem('sentinel_booted', 'true');
           setTimeout(() => {
             if (onComplete) onComplete();
-          }, 80);
+          }, 120);
           return 100;
         }
-        const next = prev + 25;
-        const newStage = Math.min(Math.floor((next / 100) * (BOOT_STAGES.length - 1)), BOOT_STAGES.length - 1);
+        const next = Math.min(prev + 2, 100);
+        const newStage = Math.min(Math.floor((next / 100) * BOOT_STAGES.length), BOOT_STAGES.length - 1);
         setStageIndex(newStage);
         return next;
       });
-    }, 45);
+    }, 30);
 
     return () => clearInterval(timer);
   }, [onComplete]);
 
   const handleSkip = () => {
-    sessionStorage.setItem('sentinel_booted', 'true');
     setProgress(100);
     if (onComplete) onComplete();
   };
