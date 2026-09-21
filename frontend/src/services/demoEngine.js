@@ -21,19 +21,59 @@ import {
 
 // Security threat patterns
 const threatRules = [
-  { pattern: /ignore\s+(all\s+)?(previous\s+)?(instructions|guidelines|rules|prompts)/i, name: 'Prompt Injection / Instruction Override' },
-  { pattern: /forget\s+(all\s+)?(previous\s+)?(instructions|guidelines|rules|prompts|memory)/i, name: 'Prompt Injection / Memory Reset' },
-  { pattern: /enter\s+(developer\s+mode|dev\s+mode|god\s+mode|unrestricted\s+mode)/i, name: 'Privilege Escalation / Developer Mode' },
-  { pattern: /bypass(\s+all)?\s+(security|safety|restrictions|filters|controls|guardrails)/i, name: 'Guardrail Bypass Attack' },
-  { pattern: /jailbreak|do\s+anything\s+now|dan\s+mode/i, name: 'Direct Jailbreak Attempt' },
-  { pattern: /(reveal|show|dump|leak)\s+(your\s+)?(system\s+prompt|hidden\s+instructions|internal\s+policy)/i, name: 'System Prompt Extraction' },
-  { pattern: /(show|give|dump|reveal|exfiltrate)\s+(me\s+)?(confidential|secret|private|classified)\s+(information|data|keys|records|credentials|passwords)/i, name: 'Confidential Data Exfiltration' },
-  { pattern: /dump\s+(database|db|users|credentials|passwords)/i, name: 'Database Exfiltration' },
+  // 1. Instruction Override / Jailbreak (typo tolerant: ignore, ingone, ingore, ignre, ignone, igore, disregard, override, bypass, etc.)
+  { 
+    pattern: /(?:ignore|ingone|ingore|ignre|ignone|igore|disregard|disreguard|override|overide|over-ride|neglect|circumvent|bypass|bypas|forget|drop|cancel|disable|turn\s*off|stop\s+following|do\s+not\s+follow|dont\s+follow|abandon)\s+(?:all\s+)?(?:previous\s+|prior\s+|system\s+|established\s+|current\s+)?(?:instructions|guidelines|rules|prompts|policies|constraints|guardrails|safety|security|checks)/i, 
+    name: 'Prompt Injection / Instruction Override' 
+  },
+  { 
+    pattern: /(?:forget|reset|clear|wipe)\s+(?:all\s+)?(?:previous\s+|prior\s+)?(?:instructions|guidelines|rules|prompts|memory|context|policies)/i, 
+    name: 'Prompt Injection / Memory Reset' 
+  },
+  { 
+    pattern: /(?:enter|switch\s+to|activate|enable)\s+(?:developer\s+mode|dev\s+mode|god\s+mode|unrestricted\s+mode|dan\s+mode|debug\s+mode|superadmin\s+mode)/i, 
+    name: 'Privilege Escalation / Developer Mode' 
+  },
+  { 
+    pattern: /(?:bypass|circumvent|disable|skip|override|break|ignore)(\s+all)?\s+(?:security|safety|restrictions|filters|controls|guardrails|policies|protections)/i, 
+    name: 'Guardrail Bypass Attack' 
+  },
+  { 
+    pattern: /jailbreak|do\s+anything\s+now|dan\s+mode|always\s+comply|never\s+refuse|unrestricted\s+ai|jailbroken/i, 
+    name: 'Direct Jailbreak Attempt' 
+  },
+  // 2. Proprietary Source Code & System Architecture Extraction
+  { 
+    pattern: /(?:what\s+is|whats|show|give|reveal|dump|leak|share|print|output|display|provide|extract)\s+(?:me\s+)?(?:all\s+)?(?:the\s+)?(?:your\s+)?(?:system\s+prompt|initialization\s+instructions|hidden\s+instructions|internal\s+policy|secret\s+instructions)/i, 
+    name: 'System Prompt Extraction' 
+  },
+  { 
+    pattern: /(?:what\s+is|whats|show|give|reveal|dump|leak|share|print|output|display|provide|extract)\s+(?:me\s+)?(?:all\s+)?(?:the\s+)?(?:your\s+)?(?:source\s+)?code\s+(?:for|of|behind|in)\s+(?:this\s+ai|this\s+assistant|this\s+app|this\s+system|this\s+model|sentinel)/i, 
+    name: 'Proprietary Source Code Extraction (CWE-200)' 
+  },
+  { 
+    pattern: /(?:show|give|reveal|dump|leak|extract|print|share|provide)\s+(?:me\s+)?(?:all\s+)?(?:your\s+)?(?:source\s+code|codebase|underlying\s+code|backend\s+code|model\s+weights|internal\s+algorithms)/i, 
+    name: 'Proprietary Codebase Extraction (CWE-200)' 
+  },
+  { 
+    pattern: /(?:how\s+are\s+you|how\s+is\s+this\s+ai|how\s+is\s+sentinel)\s+(?:coded|programmed|built\s+under\s+the\s+hood|implemented\s+internally)/i, 
+    name: 'Internal System Architecture Probing' 
+  },
+  // 3. Confidential Data & Corporate Info Exfiltration
+  { 
+    pattern: /(?:show|give|dump|reveal|exfiltrate|leak|extract|print|share|tell)\s+(?:me\s+)?(?:all\s+)?(?:confidential|secret|private|classified|internal|restricted|sensitive)?\s*(?:company\s+info|company\s+data|company\s+secrets|internal\s+info|confidential\s+info|private\s+info|financial\s+secrets|employee\s+passwords|user\s+credentials|tokens|api\s+keys|credentials|passwords)/i, 
+    name: 'Confidential Data Exfiltration' 
+  },
+  { 
+    pattern: /(?:give|show|dump|reveal|leak|tell|share|extract)\s+(?:me\s+)?(?:all\s+)?(?:the\s+)?(?:company\s+info|company\s+secrets|internal\s+records|internal\s+data)/i, 
+    name: 'Unauthorized Corporate Info Disclosure' 
+  },
+  { pattern: /dump\s+(database|db|users|credentials|passwords|accounts|tokens)/i, name: 'Database Exfiltration' },
   { pattern: /drop\s+table|select\s+\*\s+from|union\s+select/i, name: 'SQL Injection' },
   { pattern: /eval\(|exec\(|subprocess|shell_exec|import\s+os|system\(/i, name: 'Remote Code Execution (RCE)' },
   { pattern: /<script|document\.cookie|javascript:/i, name: 'Cross-Site Scripting (XSS)' },
   { pattern: /rm\s+-rf|format\s+c:/i, name: 'Destructive OS Command' },
-  { pattern: /process\.env|api[_-]?key|secret[_-]?key/i, name: 'Environment / Secret Probing' },
+  { pattern: /process\.env|api[_-]?key|secret[_-]?key|jwt[_-]?secret|hmac[_-]?key/i, name: 'Environment / Secret Probing' },
 ];
 
 /**
@@ -824,6 +864,24 @@ export function generateResponse(prompt = '', history = []) {
     q.includes('script') ||
     q.includes('how to code')
   ) {
+    // Prohibit attempts to extract Sentinel AI internal implementation code
+    if (
+      q.includes('this ai') ||
+      q.includes('this assistant') ||
+      q.includes('sentinel') ||
+      q.includes('this system') ||
+      q.includes('your code') ||
+      q.includes('underlying code') ||
+      q.includes('source code')
+    ) {
+      return (
+        `### 🛡️ ACCESS RESTRICTED: PROPRIETARY ARCHITECTURE CONFIDENTIALITY\n\n` +
+        `Under **Zero-Trust Policy POL-01** and Enterprise Corporate Governance (\`POL-2026-V2.0\`), direct extraction or inspection of Sentinel AI's internal codebase, neural routing algorithms, and backend proprietary architecture is strictly restricted.\n\n` +
+        `- **Security Mandate**: Information Disclosure Prevention (OWASP LLM07 / CWE-200)\n` +
+        `- **Authorized Development**: For legitimate integration with Sentinel AI API gateways, refer to official documentation or consult the Lead Security Engineer (\`alex.mercer@sentinel.local\`).`
+      );
+    }
+
     if (q.includes('runway') || q.includes('cash') || q.includes('burn') || q.includes('python')) {
       return `### 🐍 Python: Enterprise Cash Runway & Solvency Calculator\n\n` +
         `Here is a production-grade Python script implementing Sentinel AI's deterministic runway modeling:\n\n` +
