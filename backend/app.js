@@ -10,6 +10,7 @@ import documentRoutes from './routes/documentRoutes.js';
 import securityRoutes from './routes/securityRoutes.js';
 import mlRoutes from './routes/mlRoutes.js';
 import userRoutes from './routes/userRoutes.js';
+import financialRoutes from './routes/financialRoutes.js';
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 
 const app = express();
@@ -32,6 +33,7 @@ app.use('/api/documents', documentRoutes);
 app.use('/api/security', securityRoutes);
 app.use('/api/ml', mlRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/financial', financialRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

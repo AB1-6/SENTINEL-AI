@@ -63,6 +63,40 @@ export default function SettingsPage() {
             </select>
           </label>
         </div>
+
+        {/* Gemini API Key Configuration Section */}
+        <div className="mt-5 rounded-3xl border border-white/10 bg-white/5 p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h4 className="text-sm font-bold text-white">Google Gemini API Key (Full Automation)</h4>
+              <p className="text-xs text-slate-400">Unlock real-time generative intelligence to answer any open-domain question, generate code, and analyze data.</p>
+            </div>
+            <a
+              href="https://aistudio.google.com/app/apikey"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-semibold text-electric hover:underline"
+            >
+              Get Free Key at Google AI Studio ↗
+            </a>
+          </div>
+
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <input
+              type="password"
+              value={settings.geminiApiKey || ''}
+              onChange={(e) => {
+                const val = e.target.value;
+                setSettings((current) => ({ ...current, geminiApiKey: val }));
+                try {
+                  window.localStorage.setItem('sentinel.geminiApiKey', val);
+                } catch (err) {}
+              }}
+              placeholder="Paste Google AI Studio Key (AIzaSy...)"
+              className="flex-1 rounded-2xl border border-white/10 bg-[#08111f] px-4 py-3 font-mono text-xs text-white placeholder:text-slate-500 focus:border-electric focus:outline-none"
+            />
+          </div>
+        </div>
       </GlassCard>
 
       <WebhookConfigurator />

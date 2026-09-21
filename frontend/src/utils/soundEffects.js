@@ -17,9 +17,12 @@ function getAudioContext() {
 
 export function isAudioMuted() {
   try {
-    return localStorage.getItem('sentinel:sfx_muted') === 'true';
+    const val = localStorage.getItem('sentinel:sfx_muted');
+    // Default to muted unless the user explicitly unmuted
+    if (val === null) return true;
+    return val === 'true';
   } catch {
-    return false;
+    return true;
   }
 }
 

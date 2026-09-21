@@ -289,16 +289,16 @@ export default function PresentationPage() {
 
             <div className="grid gap-4 md:grid-cols-3">
               <div className="rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-4">
-                <span className="font-bold text-emerald-400 text-sm">🟢 Friendly Reminder</span>
-                <p className="mt-2 text-xs italic text-slate-300">"Hi Sree Fabrics, hope business is going great! Just a gentle check-in regarding INV-002 (₹1,20,000)..."</p>
+                <span className="font-bold text-emerald-400 text-sm">🟢 Polite Check-in (1–10d)</span>
+                <p className="mt-2 text-xs italic text-slate-300">"Dear Anlin (Apex CyberLogix Solutions), gentle reminder regarding invoice INV-2026-001 (₹45,000) for Sentinel AI Gateway Pro (delayed 6d)..."</p>
               </div>
               <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4">
-                <span className="font-bold text-amber-400 text-sm">🟡 Firm Reminder</span>
-                <p className="mt-2 text-xs italic text-slate-300">"Hello Kavya Boutique, invoice INV-001 (₹45,000) is 38 days overdue. Please arrange payment by Friday..."</p>
+                <span className="font-bold text-amber-400 text-sm">🟡 Firm Notice (11–30d)</span>
+                <p className="mt-2 text-xs italic text-slate-300">"Hello Angel Rose Biju (Rosewood Cloud Systems), invoice INV-2026-002 (₹1,20,000) for Sentinel Enterprise Cluster is 18 days overdue..."</p>
               </div>
               <div className="rounded-2xl border border-red-500/40 bg-red-500/10 p-4">
-                <span className="font-bold text-red-400 text-sm">🔴 Final Notice</span>
-                <p className="mt-2 text-xs italic text-slate-300">"URGENT: Invoice INV-001 is 38 days overdue. Please remit within 48 hours to avoid legal escalation..."</p>
+                <span className="font-bold text-red-400 text-sm">🔴 Final Notice (30+d)</span>
+                <p className="mt-2 text-xs italic text-slate-300">"ATTENTION: DIYA JOY (JoyNex Digital Retail), invoice INV-2026-003 (₹78,000) is 42 days overdue. Immediate settlement required to prevent service suspension..."</p>
               </div>
             </div>
           </div>

@@ -458,6 +458,69 @@ export default function UserManagementPage() {
         </div>
       </GlassCard>
 
+      {/* Enterprise RBAC Permissions Matrix */}
+      <GlassCard className="p-6 border-slate-800">
+        <div className="flex items-center gap-3 pb-3 border-b border-slate-800">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-500/10 text-sky-400 border border-sky-500/20">
+            <Lock className="h-5 w-5" />
+          </div>
+          <div>
+            <h4 className="text-sm font-semibold text-white">Enterprise Role-Based Access Control (RBAC) Matrix</h4>
+            <p className="text-xs text-slate-400">Strict zero-trust capability assignments mapped across operational clearances.</p>
+          </div>
+        </div>
+
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full text-left text-xs border-collapse">
+            <thead className="bg-slate-950 text-slate-400 font-mono border-b border-slate-800">
+              <tr>
+                <th className="py-2.5 px-3">System Permission & Scope</th>
+                <th className="py-2.5 px-3 text-center">Super Admin (L5)</th>
+                <th className="py-2.5 px-3 text-center">Security Analyst (L3)</th>
+                <th className="py-2.5 px-3 text-center">Standard Employee (L1)</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800/80 text-slate-300">
+              {[
+                { perm: 'AI Assistant Prompt & Inference', admin: true, analyst: true, user: true },
+                { perm: 'Enterprise Document Intelligence & RAG', admin: true, analyst: true, user: true },
+                { perm: 'Live Zero-Trust Guardrail Telemetry', admin: true, analyst: true, user: false },
+                { perm: 'Jailbreak Forensic Payload Inspection', admin: true, analyst: true, user: false },
+                { perm: 'SIEM Connector & Webhook Streaming', admin: true, analyst: false, user: false },
+                { perm: 'Guardrail Policy & Rule Tuning', admin: true, analyst: false, user: false },
+                { perm: 'Audit Trail Forensic CSV/JSON Export', admin: true, analyst: true, user: false },
+                { perm: 'User Account Provisioning & Deprovisioning', admin: true, analyst: false, user: false },
+              ].map((row) => (
+                <tr key={row.perm} className="hover:bg-slate-900/50 transition">
+                  <td className="py-2.5 px-3 font-medium text-slate-200">{row.perm}</td>
+                  <td className="py-2.5 px-3 text-center">
+                    {row.admin ? (
+                      <span className="inline-flex items-center text-emerald-400 font-bold"><Check className="h-4 w-4" /></span>
+                    ) : (
+                      <span className="inline-flex items-center text-slate-600"><X className="h-4 w-4" /></span>
+                    )}
+                  </td>
+                  <td className="py-2.5 px-3 text-center">
+                    {row.analyst ? (
+                      <span className="inline-flex items-center text-emerald-400 font-bold"><Check className="h-4 w-4" /></span>
+                    ) : (
+                      <span className="inline-flex items-center text-slate-600"><X className="h-4 w-4" /></span>
+                    )}
+                  </td>
+                  <td className="py-2.5 px-3 text-center">
+                    {row.user ? (
+                      <span className="inline-flex items-center text-emerald-400 font-bold"><Check className="h-4 w-4" /></span>
+                    ) : (
+                      <span className="inline-flex items-center text-slate-600"><X className="h-4 w-4" /></span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </GlassCard>
+
       {/* ADD USER MODAL */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fade-in">

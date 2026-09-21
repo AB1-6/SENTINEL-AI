@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,8 +6,8 @@
 
 :root {
   color-scheme: dark;
-  font-family: 'Space Grotesk', 'Segoe UI Variable Display', 'Segoe UI', system-ui, sans-serif;
-  background: #050816;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #090d16;
 }
 
 html, body, #root {
@@ -18,38 +18,39 @@ body {
   position: relative;
   margin: 0;
   overflow-x: hidden;
-  background: var(--bg-main, linear-gradient(180deg, #091325 0%, #050816 45%, #03050b 100%));
-  color: #f8fafc;
+  background: var(--bg-main, #090d16);
+  color: #f1f5f9;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  transition: background 0.5s ease;
+  transition: background 0.4s ease;
 }
 
-body::before,
+/* Subtle enterprise grid overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.12;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(circle at 50% 30%, rgba(0, 0, 0, 0.9), transparent 85%);
+}
+
 body::after {
   content: '';
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 0;
-}
-
-body::before {
-  opacity: 0.18;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.055) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.055) 1px, transparent 1px);
-  background-size: 72px 72px;
-  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.95), transparent 95%);
-}
-
-body::after {
-  opacity: 0.28;
+  opacity: 0.22;
   background:
-    radial-gradient(circle at 50% 0%, var(--accent-accent, rgba(77, 215, 255, 0.24)), transparent 28%),
-    radial-gradient(circle at 15% 85%, rgba(94, 242, 139, 0.12), transparent 20%),
-    radial-gradient(circle at 85% 72%, rgba(255, 94, 123, 0.08), transparent 22%);
-  filter: blur(12px);
+    radial-gradient(circle at 20% 10%, rgba(59, 130, 246, 0.14), transparent 35%),
+    radial-gradient(circle at 80% 80%, rgba(16, 185, 129, 0.08), transparent 35%);
+  filter: blur(24px);
 }
 
 #root {
@@ -57,86 +58,72 @@ body::after {
   z-index: 1;
 }
 
-/* Accent variables (default) */
+/* Enterprise tokens */
 :root, html, #root {
-  --accent: #4dd7ff;
-  --accent-2: #22a3ff;
-  --accent-accent: rgba(77,215,255,0.12);
-  --accent-glow: 0 0 28px rgba(77,215,255,0.12);
-  --bg-main: linear-gradient(180deg, #091325 0%, #050816 45%, #03050b 100%);
-  --panel-bg: rgba(7,16,29,0.92);
-  --card-border: rgba(77, 215, 255, 0.14);
+  --accent: #38bdf8;
+  --accent-2: #3b82f6;
+  --accent-accent: rgba(56, 189, 248, 0.12);
+  --accent-glow: 0 0 20px rgba(56, 189, 248, 0.15);
+  --bg-main: #090d16;
+  --panel-bg: rgba(15, 23, 42, 0.85);
+  --card-border: rgba(255, 255, 255, 0.08);
 }
 
-/* Theme variants applied via [data-theme] */
+/* Theme variants */
 :root[data-theme="Dark Glass"], html[data-theme="Dark Glass"], #root[data-theme="Dark Glass"] {
-  --bg-main: radial-gradient(circle at 18% 18%, rgba(77, 215, 255, 0.18), transparent 22%),
-    radial-gradient(circle at 82% 12%, rgba(94, 242, 139, 0.11), transparent 20%),
-    radial-gradient(circle at 50% 100%, rgba(34, 163, 255, 0.12), transparent 32%),
-    linear-gradient(180deg, #091325 0%, #050816 45%, #03050b 100%);
-  --panel-bg: rgba(7, 16, 29, 0.88);
-  --accent: #4dd7ff;
-  --accent-2: #22a3ff;
-  --accent-accent: rgba(77, 215, 255, 0.14);
-  --accent-glow: 0 0 32px rgba(77, 215, 255, 0.25);
-  --card-border: rgba(77, 215, 255, 0.18);
+  --bg-main: #090d16;
+  --panel-bg: rgba(14, 20, 34, 0.88);
+  --accent: #38bdf8;
+  --accent-2: #3b82f6;
+  --accent-accent: rgba(56, 189, 248, 0.12);
+  --accent-glow: 0 0 24px rgba(56, 189, 248, 0.18);
+  --card-border: rgba(255, 255, 255, 0.09);
 }
 
 :root[data-theme="Midnight Blue"], html[data-theme="Midnight Blue"], #root[data-theme="Midnight Blue"] {
-  --bg-main: radial-gradient(circle at 75% 20%, rgba(56, 189, 248, 0.2), transparent 30%),
-    linear-gradient(180deg, #071530 0%, #030d24 50%, #010614 100%);
-  --panel-bg: rgba(4, 18, 44, 0.92);
-  --accent: #38bdf8;
+  --bg-main: #060a14;
+  --panel-bg: rgba(10, 18, 38, 0.92);
+  --accent: #60a5fa;
   --accent-2: #2563eb;
-  --accent-accent: rgba(56, 189, 248, 0.2);
-  --accent-glow: 0 0 36px rgba(56, 189, 248, 0.35);
-  --card-border: rgba(56, 189, 248, 0.28);
+  --accent-accent: rgba(96, 165, 250, 0.16);
+  --accent-glow: 0 0 24px rgba(96, 165, 250, 0.22);
+  --card-border: rgba(96, 165, 250, 0.16);
 }
 
 :root[data-theme="Enterprise Contrast"], html[data-theme="Enterprise Contrast"], #root[data-theme="Enterprise Contrast"] {
-  --bg-main: radial-gradient(circle at 20% 80%, rgba(96, 165, 250, 0.16), transparent 35%),
-    linear-gradient(180deg, #020b18 0%, #01050e 60%, #000206 100%);
-  --panel-bg: rgba(6, 15, 32, 0.95);
-  --accent: #60a5fa;
+  --bg-main: #04070d;
+  --panel-bg: rgba(8, 14, 28, 0.96);
+  --accent: #38bdf8;
   --accent-2: #3b82f6;
-  --accent-accent: rgba(96, 165, 250, 0.22);
-  --accent-glow: 0 0 38px rgba(96, 165, 250, 0.4);
-  --card-border: rgba(96, 165, 250, 0.35);
+  --accent-accent: rgba(56, 189, 248, 0.18);
+  --accent-glow: 0 0 24px rgba(56, 189, 248, 0.25);
+  --card-border: rgba(255, 255, 255, 0.12);
 }
 
-
-
-/* Neon hover/focus interactions */
+/* Enterprise hover/interaction states */
 .neon-hover, button.neon-hover, a.neon-hover {
-  transition: transform 220ms ease, box-shadow 220ms ease;
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
 }
 .neon-hover:hover, button.neon-hover:hover, a.neon-hover:hover {
-  transform: translateY(-4px) scale(1.02);
-  box-shadow: var(--accent-glow), 0 6px 30px rgba(2,6,23,0.6);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 16px rgba(56, 189, 248, 0.14);
 }
 .neon-border {
-  border: 1px solid var(--accent-accent);
+  border: 1px solid var(--card-border);
 }
 
-/* Make futuristic-panel and glass-card use theme CSS variables */
+/* Enterprise card styling */
 .futuristic-panel, .glass-card {
-  border: 1px solid var(--card-border, rgba(77, 215, 255, 0.14));
-  background:
-    linear-gradient(180deg, var(--panel-bg, rgba(7, 16, 29, 0.92)), rgba(5, 8, 22, 0.92)),
-    radial-gradient(circle at top, var(--accent-accent, rgba(77, 215, 255, 0.08)), transparent 42%);
-  box-shadow:
-    0 20px 60px rgba(0, 0, 0, 0.36),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    var(--accent-glow, 0 0 0 1px rgba(77, 215, 255, 0.04));
-  backdrop-filter: blur(24px);
-  transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+  border: 1px solid var(--card-border, rgba(255, 255, 255, 0.08));
+  background: var(--panel-bg, rgba(15, 23, 42, 0.85));
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(16px);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .futuristic-panel:focus-within, .glass-card:focus-within {
-  border-color: var(--accent);
-  box-shadow:
-    0 20px 60px rgba(0, 0, 0, 0.36),
-    var(--accent-glow);
+  border-color: rgba(56, 189, 248, 0.4);
+  box-shadow: 0 4px 24px rgba(56, 189, 248, 0.12);
 }
 
 * {
@@ -144,19 +131,19 @@ body::after {
 }
 
 ::placeholder {
-  color: rgba(148, 163, 184, 0.68);
+  color: rgba(148, 163, 184, 0.6);
 }
 
 h1,
 h2,
 h3,
 .font-display {
-  font-family: 'Orbitron', 'Space Grotesk', sans-serif;
-  letter-spacing: -0.03em;
+  font-family: 'Inter', system-ui, sans-serif;
+  letter-spacing: -0.02em;
 }
 
 ::selection {
-  background: var(--accent, rgba(77, 215, 255, 0.36));
+  background: rgba(59, 130, 246, 0.35);
   color: #ffffff;
 }
 

@@ -35,9 +35,41 @@ export const quickActions = [
 ];
 
 export const documents = [
-  { id: 'doc-1', name: 'Employee-Handbook.pdf', type: 'PDF', size: '1.5 MB', summary: 'Company handbook with policies and security guidance.' },
-  { id: 'doc-2', name: 'Q3-Strategy.docx', type: 'DOCX', size: '860 KB', summary: 'Strategic planning deck for the quarter.' },
-  { id: 'doc-3', name: 'Security-Playbook.pdf', type: 'PDF', size: '2.4 MB', summary: 'Incident response and enterprise defense playbook.' },
+  { 
+    id: 'doc-1', 
+    name: 'Sentinel_Company_Policy_Rules_and_Regulations_2026.pdf', 
+    type: 'PDF', 
+    size: '2.8 MB', 
+    summary: 'Sentinel AI Technologies Inc. official corporate governance, zero-trust security rules, employee conduct, client confidentiality, and credit collection policies.' 
+  },
+  { 
+    id: 'doc-2', 
+    name: 'SaaS_Agreement_Apex_CyberLogix_INV-2026-001.pdf', 
+    type: 'PDF', 
+    size: '1.4 MB', 
+    summary: 'Quarterly SaaS Agreement for Apex CyberLogix Solutions Pvt. Ltd. (Anlin, CTO). Sentinel AI Gateway Pro & Prompt Injection Firewall. ₹45,000 / qtr.' 
+  },
+  { 
+    id: 'doc-3', 
+    name: 'Enterprise_Cluster_SLA_Rosewood_Cloud_INV-2026-002.pdf', 
+    type: 'PDF', 
+    size: '3.2 MB', 
+    summary: 'Enterprise dedicated cluster & Client-Side PII Redactor agreement for Rosewood Cloud Systems Inc. (Angel Rose Biju, VP Eng). ₹1,20,000 / half-year with 99.99% uptime SLA.' 
+  },
+  { 
+    id: 'doc-4', 
+    name: 'FinOps_Copilot_Master_Agreement_JoyNex_Retail_INV-2026-003.pdf', 
+    type: 'PDF', 
+    size: '2.1 MB', 
+    summary: 'Gemma SME Cashflow Copilot & AI Support Shield agreement with JoyNex Digital Retail Ltd. (Diya Joy, Ops Dir). Annual tier ₹78,000 with critical default escalation clause.' 
+  },
+  { 
+    id: 'doc-5', 
+    name: 'Enterprise_Security_Playbook_2026.pdf', 
+    type: 'PDF', 
+    size: '3.9 MB', 
+    summary: 'Zero-trust incident response protocols, heuristic prompt firewall thresholds, and Q3 financial solvency audit benchmarks.' 
+  },
 ];
 
 export const chatThreads = [

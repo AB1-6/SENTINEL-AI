@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import GlassCard from './GlassCard';
 import IntensityControl from './IntensityControl';
 import AdminControlModal from './AdminControlModal';
+import CommandPalette from './CommandPalette';
 import { isAudioMuted, toggleAudioMute, playClickSound, playChimeSound } from '@/utils/soundEffects';
 
 export default function Topbar() {
@@ -15,6 +16,7 @@ export default function Topbar() {
   const { provider, setProvider } = useAiProvider();
   const [open, setOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
+  const [cmdOpen, setCmdOpen] = useState(false);
   const [muted, setMuted] = useState(isAudioMuted);
   const badgeRef = useRef(null);
 
@@ -28,6 +30,18 @@ export default function Topbar() {
     return () => document.removeEventListener('click', onDoc);
   }, []);
 
+  // Global Command Palette hotkey (Cmd+K / Ctrl+K)
+  useEffect(() => {
+    function handleKeyDown(e) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setCmdOpen((prev) => !prev);
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const handleSoundToggle = () => {
     const nextState = toggleAudioMute();
     setMuted(nextState);
@@ -37,13 +51,25 @@ export default function Topbar() {
   return (
     <>
       <AdminControlModal isOpen={adminOpen} onClose={() => setAdminOpen(false)} />
+      <CommandPalette isOpen={cmdOpen} onClose={() => setCmdOpen(false)} />
       <header className="flex flex-col gap-4 border-b border-cyan-500/10 bg-[var(--panel-bg)]/70 px-4 py-4 backdrop-blur-2xl lg:flex-row lg:items-center lg:justify-between lg:px-6">
         <div className="flex w-full min-w-0 flex-wrap items-center gap-3 xl:w-auto xl:flex-none xl:flex-nowrap xl:gap-4">
           <div className="topbar-search-wrapper w-full min-w-[240px] max-w-[360px] xl:w-[360px]">
-            <GlassCard className="futuristic-panel flex min-w-0 w-full items-center gap-3 rounded-full px-4 py-3">
+            <GlassCard 
+              className="futuristic-panel flex min-w-0 w-full items-center gap-3 rounded-full px-4 py-3 cursor-pointer hover:border-sky-500/40"
+              onClick={() => {
+                playClickSound();
+                setCmdOpen(true);
+              }}
+            >
               <Search className="h-4.5 w-4.5 text-cyan-300" />
-              <input className="topbar-search-input" placeholder="Search anything..." />
-              <span className="rounded-md border border-white/10 px-1.5 py-0.5 text-[11px] font-medium text-slate-400">⌘ K</span>
+              <input 
+                className="topbar-search-input cursor-pointer" 
+                placeholder="Search commands, tools, docs..." 
+                readOnly
+                onClick={() => setCmdOpen(true)}
+              />
+              <span className="rounded-md border border-white/10 px-1.5 py-0.5 text-[11px] font-medium text-slate-400 font-mono">⌘ K</span>
             </GlassCard>
           </div>
 
@@ -158,14 +184,14 @@ function displayModelName(provider) {
   const key = provider.toLowerCase();
   switch (key) {
     case 'gemini':
-      return 'Gemini 2.5 Pro';
+      return 'Gemini 1.5 Flash (Enterprise)';
     case 'gemma':
-      return 'Gemma Lite';
+      return 'Gemma 2 Copilot (Secure)';
     case 'openai':
       return 'OpenAI GPT-4o';
     case 'azure openai':
     case 'azureopenai':
-      return 'Azure OpenAI GPT-4o';
+      return 'Azure OpenAI (GovCloud)';
     default:
       return provider;
   }

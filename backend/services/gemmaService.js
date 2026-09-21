@@ -1,10 +1,13 @@
+import { generateAiResponse } from './geminiService.js';
+
 export async function generateGemmaResponse(prompt, context = {}) {
-  // If no API key provided, return a mock/demo response for local testing.
+  // If no API key provided, route to the deterministic financial engine for local/demo testing.
   if (!process.env.GEMMA_API_KEY) {
+    const aiResp = await generateAiResponse(prompt, context);
     return {
-      text: `Gemma (demo) reply for: ${prompt}`,
-      provider: 'mock-gemma',
-      citations: context.documentNames ? [`Referenced documents: ${context.documentNames.join(', ')}`] : [],
+      text: aiResp.text,
+      provider: 'gemma-local-engine',
+      citations: context.documentNames && context.documentNames.length > 0 ? [`Referenced documents: ${context.documentNames.join(', ')}`] : [],
     };
   }
 
@@ -18,31 +21,38 @@ export async function generateGemmaResponse(prompt, context = {}) {
     temperature: 0.2,
   };
 
-  const res = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${process.env.GEMMA_API_KEY}`,
-    },
-    body: JSON.stringify(payload),
-  });
+  try {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${process.env.GEMMA_API_KEY}`,
+      },
+      body: JSON.stringify(payload),
+    });
 
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`Gemma request failed: ${errText}`);
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error(`Gemma API error: ${res.status} ${errText}`);
+      // Clean fallback to deterministic engine
+      const aiResp = await generateAiResponse(prompt, context);
+      return { text: aiResp.text, provider: 'gemma-local-engine', fallbackReason: `Gemma API: ${res.status}` };
+    }
+
+    const data = await res.json();
+    let text = '';
+    if (typeof data === 'string') text = data;
+    else if (data.output) text = data.output;
+    else if (data.choices && data.choices[0]) text = data.choices[0].text || JSON.stringify(data.choices[0]);
+    else if (data.data && data.data[0]) text = data.data[0].text || JSON.stringify(data.data[0]);
+    else text = JSON.stringify(data);
+
+    return { text, provider: 'gemma', raw: data };
+  } catch (err) {
+    console.error('Error in generateGemmaResponse:', err.message);
+    const aiResp = await generateAiResponse(prompt, context);
+    return { text: aiResp.text, provider: 'gemma-local-engine', fallbackReason: err.message };
   }
-
-  const data = await res.json();
-
-  // Attempt to extract text from common response shapes.
-  let text = '';
-  if (typeof data === 'string') text = data;
-  else if (data.output) text = data.output;
-  else if (data.choices && data.choices[0]) text = data.choices[0].text || JSON.stringify(data.choices[0]);
-  else if (data.data && data.data[0]) text = data.data[0].text || JSON.stringify(data.data[0]);
-  else text = JSON.stringify(data);
-
-  return { text, provider: 'gemma', raw: data };
 }
 
 export default generateGemmaResponse;

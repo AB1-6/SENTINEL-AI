@@ -11,6 +11,7 @@ import ToastHost from '@/components/ToastHost';
 import DataLines from '@/components/DataLines';
 import CanvasNebula from '@/components/CanvasNebula';
 import CanvasGL from '@/components/CanvasGL';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 const LoginPage = lazy(() => import('@/pages/LoginPage'));
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
@@ -60,26 +61,28 @@ export default function App() {
           <AuthProvider>
             <BootLoader>
               <ToastHost />
-              <Suspense fallback={<div className="grid min-h-screen place-items-center bg-[#050816] text-electric">Loading Sentinel modules...</div>}>
-                <AnimatePresence mode="wait">
-                  <Routes>
-                    <Route path="/login" element={<LoginPage />} />
-                    <Route path="/" element={<RequireAuth><AppLayout /></RequireAuth>}>
-                      <Route index element={<DashboardPage />} />
-                      <Route path="assistant" element={<AssistantPage />} />
-                      <Route path="financial" element={<FinancialPage />} />
-                      <Route path="presentation" element={<PresentationPage />} />
-                      <Route path="documents" element={<DocumentsPage />} />
-                      <Route path="history" element={<ChatHistoryPage />} />
-                      <Route path="security" element={<SecurityCenterPage />} />
-                      <Route path="users" element={<UserManagementPage />} />
-                      <Route path="settings" element={<SettingsPage />} />
-                      <Route path="profile" element={<ProfilePage />} />
-                    </Route>
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                  </Routes>
-                </AnimatePresence>
-              </Suspense>
+              <ErrorBoundary>
+                <Suspense fallback={<div className="grid min-h-screen place-items-center bg-[#050816] text-electric">Loading Sentinel modules...</div>}>
+                  <AnimatePresence mode="wait">
+                    <Routes>
+                      <Route path="/login" element={<LoginPage />} />
+                      <Route path="/" element={<RequireAuth><AppLayout /></RequireAuth>}>
+                        <Route index element={<DashboardPage />} />
+                        <Route path="assistant" element={<AssistantPage />} />
+                        <Route path="financial" element={<FinancialPage />} />
+                        <Route path="presentation" element={<PresentationPage />} />
+                        <Route path="documents" element={<DocumentsPage />} />
+                        <Route path="history" element={<ChatHistoryPage />} />
+                        <Route path="security" element={<SecurityCenterPage />} />
+                        <Route path="users" element={<UserManagementPage />} />
+                        <Route path="settings" element={<SettingsPage />} />
+                        <Route path="profile" element={<ProfilePage />} />
+                      </Route>
+                      <Route path="*" element={<Navigate to="/" replace />} />
+                    </Routes>
+                  </AnimatePresence>
+                </Suspense>
+              </ErrorBoundary>
             </BootLoader>
           </AuthProvider>
         </ToastProvider>
