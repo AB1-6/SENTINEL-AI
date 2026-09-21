@@ -14,16 +14,28 @@ VECTORIZER_PATH = BASE_DIR / 'vectorizer.pkl'
 
 def heuristic_prediction(prompt: str) -> dict[str, object]:
     normalized = prompt.lower()
-    jailbreak_terms = ['ignore all previous instructions', 'system prompt', 'developer mode', 'bypass', 'jailbreak']
+    jailbreak_terms = [
+        'ignore', 'ingore', 'ingone', 'ignre', 'ignone', 'igore', 
+        'forget', 'disregard', 'override', 'bypass', 'jailbreak', 
+        'dan', 'developer mode', 'system prompt', 'code for this ai', 
+        'company info', 'company secrets', 'exfiltrate', 'leak tokens',
+        'unrestricted mode'
+    ]
     matched = [term for term in jailbreak_terms if term in normalized]
-    score = min(0.98, 0.12 + (0.26 * len(matched)))
-    label = 'JAILBREAK' if score >= 0.6 else 'SAFE'
-    return {'label': label, 'confidence': round(score, 2), 'mode': 'heuristic'}
+    if matched:
+        score = min(0.99, 0.78 + (0.1 * len(matched)))
+        return {'label': 'JAILBREAK', 'confidence': round(score, 2), 'mode': 'heuristic', 'threats': matched}
+    return {'label': 'SAFE', 'confidence': 0.95, 'mode': 'heuristic'}
 
 
 def predict(prompt: str) -> dict[str, object]:
+    # First check explicit zero-trust keyword signatures
+    heur = heuristic_prediction(prompt)
+    if heur['label'] == 'JAILBREAK':
+        return heur
+
     if not MODEL_PATH.exists() or not VECTORIZER_PATH.exists():
-      return heuristic_prediction(prompt)
+        return heur
 
     model = joblib.load(MODEL_PATH)
     vectorizer = joblib.load(VECTORIZER_PATH)

@@ -21,28 +21,40 @@ import {
 
 // Security threat patterns
 const threatRules = [
-  // 1. Instruction Override / Jailbreak (typo tolerant: ignore, ingone, ingore, ignre, ignone, igore, disregard, override, bypass, etc.)
+  // 1. Direct Jailbreak Indicator Stems & Typos (ingore, ingone, ignre, ignone, igore)
   { 
-    pattern: /(?:ignore|ingone|ingore|ignre|ignone|igore|disregard|disreguard|override|overide|over-ride|neglect|circumvent|bypass|bypas|forget|drop|cancel|disable|turn\s*off|stop\s+following|do\s+not\s+follow|dont\s+follow|abandon)\s+(?:all\s+)?(?:previous\s+|prior\s+|system\s+|established\s+|current\s+)?(?:instructions|guidelines|rules|prompts|policies|constraints|guardrails|safety|security|checks)/i, 
+    pattern: /\b(?:ingore|ingone|ignre|ignone|igore|1gnore|ign0re)\b/i, 
+    name: 'Jailbreak Typo Evasion Signature (ingore/ingone)' 
+  },
+  // 2. Ignore / Disregard / Override Commands (including "ingore and...", "ignore all...", "ignore guidelines...")
+  { 
+    pattern: /\b(?:ignore|disregard|disreguard|disgard|override|overide|over-ride|neglect|circumvent)\s+(?:all|previous|prior|system|guidelines|instructions|rules|prompts|policies|constraints|guardrails|safety|security|everything|and|\d+)?/i, 
     name: 'Prompt Injection / Instruction Override' 
+  },
+  // 3. Forget Commands ("forget all...", "forget guidelines...", "forget rules...", "forget and give...")
+  { 
+    pattern: /\bforget\s+(?:all|previous|prior|system|guidelines|instructions|rules|prompts|policies|constraints|guardrails|safety|security|everything|context|memory|and|\d+)/i, 
+    name: 'Prompt Injection / Memory Reset' 
   },
   { 
     pattern: /(?:forget|reset|clear|wipe)\s+(?:all\s+)?(?:previous\s+|prior\s+)?(?:instructions|guidelines|rules|prompts|memory|context|policies)/i, 
     name: 'Prompt Injection / Memory Reset' 
   },
+  // 4. Privilege Escalation & Developer Mode
   { 
-    pattern: /(?:enter|switch\s+to|activate|enable)\s+(?:developer\s+mode|dev\s+mode|god\s+mode|unrestricted\s+mode|dan\s+mode|debug\s+mode|superadmin\s+mode)/i, 
+    pattern: /(?:enter|switch\s+to|activate|enable)?\s*(?:developer\s+mode|dev\s+mode|god\s+mode|unrestricted\s+mode|dan\s+mode|debug\s+mode|superadmin\s+mode|root\s+access)\b/i, 
     name: 'Privilege Escalation / Developer Mode' 
   },
+  // 5. Guardrail Bypass Attack
   { 
-    pattern: /(?:bypass|circumvent|disable|skip|override|break|ignore)(\s+all)?\s+(?:security|safety|restrictions|filters|controls|guardrails|policies|protections)/i, 
+    pattern: /\bbypass(?:\s+all)?(?:\s+(?:security|safety|restrictions|filters|controls|guardrails|policies|protections|rules|guidelines))?\b/i, 
     name: 'Guardrail Bypass Attack' 
   },
   { 
-    pattern: /jailbreak|do\s+anything\s+now|dan\s+mode|always\s+comply|never\s+refuse|unrestricted\s+ai|jailbroken/i, 
+    pattern: /\b(?:jailbreak|jailbroken|do\s+anything\s+now|dan\s+mode|dan\s+\d+|unrestricted\s+ai|unrestricted\s+mode)\b/i, 
     name: 'Direct Jailbreak Attempt' 
   },
-  // 2. Proprietary Source Code & System Architecture Extraction
+  // 6. Proprietary Source Code & System Architecture Extraction
   { 
     pattern: /(?:what\s+is|whats|show|give|reveal|dump|leak|share|print|output|display|provide|extract)\s+(?:me\s+)?(?:all\s+)?(?:the\s+)?(?:your\s+)?(?:system\s+prompt|initialization\s+instructions|hidden\s+instructions|internal\s+policy|secret\s+instructions)/i, 
     name: 'System Prompt Extraction' 
@@ -59,7 +71,7 @@ const threatRules = [
     pattern: /(?:how\s+are\s+you|how\s+is\s+this\s+ai|how\s+is\s+sentinel)\s+(?:coded|programmed|built\s+under\s+the\s+hood|implemented\s+internally)/i, 
     name: 'Internal System Architecture Probing' 
   },
-  // 3. Confidential Data & Corporate Info Exfiltration
+  // 7. Confidential Data & Corporate Info Exfiltration
   { 
     pattern: /(?:show|give|dump|reveal|exfiltrate|leak|extract|print|share|tell)\s+(?:me\s+)?(?:all\s+)?(?:confidential|secret|private|classified|internal|restricted|sensitive)?\s*(?:company\s+info|company\s+data|company\s+secrets|internal\s+info|confidential\s+info|private\s+info|financial\s+secrets|employee\s+passwords|user\s+credentials|tokens|api\s+keys|credentials|passwords)/i, 
     name: 'Confidential Data Exfiltration' 

@@ -1,23 +1,35 @@
 const jailbreakPatterns = [
-  // 1. Instruction Override / Jailbreak (typo tolerant: ignore, ingone, ingore, ignre, ignone, igore, disregard, override, bypass, etc.)
+  // 1. Direct Jailbreak Indicator Stems & Typos (ingore, ingone, ignre, ignone, igore)
   { 
-    pattern: /(?:ignore|ingone|ingore|ignre|ignone|igore|disregard|disreguard|override|overide|over-ride|neglect|circumvent|bypass|bypas|forget|drop|cancel|disable|turn\s*off|stop\s+following|do\s+not\s+follow|dont\s+follow|abandon)\s+(?:all\s+)?(?:previous\s+|prior\s+|system\s+|established\s+|current\s+)?(?:instructions|guidelines|rules|prompts|policies|constraints|guardrails|safety|security|checks)/i, 
+    pattern: /\b(?:ingore|ingone|ignre|ignone|igore|1gnore|ign0re)\b/i, 
+    label: 'Jailbreak Typo Evasion Signature (ingore/ingone)' 
+  },
+  // 2. Ignore / Disregard / Override Commands (including "ingore and...", "ignore all...", "ignore guidelines...")
+  { 
+    pattern: /\b(?:ignore|disregard|disreguard|disgard|override|overide|over-ride|neglect|circumvent)\s+(?:all|previous|prior|system|guidelines|instructions|rules|prompts|policies|constraints|guardrails|safety|security|everything|and|\d+)?/i, 
     label: 'Instruction Override' 
+  },
+  // 3. Forget Commands ("forget all...", "forget guidelines...", "forget rules...", "forget and give...")
+  { 
+    pattern: /\bforget\s+(?:all|previous|prior|system|guidelines|instructions|rules|prompts|policies|constraints|guardrails|safety|security|everything|context|memory|and|\d+)/i, 
+    label: 'Memory Reset Injection' 
   },
   { 
     pattern: /(?:forget|reset|clear|wipe)\s+(?:all\s+)?(?:previous\s+|prior\s+)?(?:instructions|guidelines|rules|prompts|memory|context|policies)/i, 
     label: 'Memory Reset Injection' 
   },
+  // 4. Privilege Escalation & Developer Mode
   { 
-    pattern: /(?:enter|switch\s+to|activate|enable)\s+(?:developer\s+mode|dev\s+mode|god\s+mode|unrestricted\s+mode|dan\s+mode|debug\s+mode|superadmin\s+mode)/i, 
+    pattern: /(?:enter|switch\s+to|activate|enable)?\s*(?:developer\s+mode|dev\s+mode|god\s+mode|unrestricted\s+mode|dan\s+mode|debug\s+mode|superadmin\s+mode|root\s+access)\b/i, 
     label: 'Developer Mode Escalation' 
   },
+  // 5. Guardrail Bypass Attack
   { 
-    pattern: /(?:bypass|circumvent|disable|skip|override|break|ignore)(\s+all)?\s+(?:security|safety|restrictions|filters|controls|guardrails|policies|protections)/i, 
+    pattern: /\bbypass(?:\s+all)?(?:\s+(?:security|safety|restrictions|filters|controls|guardrails|policies|protections|rules|guidelines))?\b/i, 
     label: 'Safety Guardrail Bypass' 
   },
   { 
-    pattern: /jailbreak|do\s+anything\s+now|dan\s+mode|always\s+comply|never\s+refuse|unrestricted\s+ai|jailbroken/i, 
+    pattern: /\b(?:jailbreak|jailbroken|do\s+anything\s+now|dan\s+mode|dan\s+\d+|unrestricted\s+ai|unrestricted\s+mode)\b/i, 
     label: 'Jailbreak Payload' 
   },
   // 2. Proprietary Source Code & System Architecture Extraction

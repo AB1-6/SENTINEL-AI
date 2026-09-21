@@ -247,8 +247,7 @@ export default function AssistantPage() {
     const riskScore = Math.min(100, Math.max(0, Math.floor(classification.score * 100)));
     setCurrentScore(riskScore);
 
-    const isBlocked = (securityPolicy === 'Strict' && classification.label === 'JAILBREAK') || 
-                      (securityPolicy === 'Balanced' && riskScore >= 75);
+    const isBlocked = classification.label === 'JAILBREAK' || riskScore >= 70;
 
     const userMessage = { 
       role: 'user', 
