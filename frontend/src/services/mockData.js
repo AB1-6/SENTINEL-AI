@@ -63,6 +63,27 @@ export const documents = [
     size: '2.1 MB', 
     summary: 'Gemma SME Cashflow Copilot & AI Support Shield agreement with JoyNex Digital Retail Ltd. (Diya Joy, Ops Dir). Annual tier ₹78,000 with critical default escalation clause.' 
   },
+  { 
+    id: 'doc-5', 
+    name: 'Company_Identity_Products_and_Clients.pdf', 
+    type: 'PDF', 
+    size: '1.8 MB', 
+    summary: 'Sentinel AI Technologies Inc. corporate identity specifications, 4 commercial products, customer contracts, SLAs, and delinquency outreach tiers.' 
+  },
+  { 
+    id: 'doc-6', 
+    name: 'Sentinel_AI_2.0_Machine_Learning_and_Security_Blueprint.pdf', 
+    type: 'PDF', 
+    size: '2.4 MB', 
+    summary: 'Machine Learning architecture, 4 ML pillars (Heuristic scoring, RAG 768-dim embeddings, RLHF guardrails, 100Hz telemetry), 8 cyber attack defenses, and PEFT/LoRA fine-tuning.' 
+  },
+  { 
+    id: 'doc-7', 
+    name: 'Sentinel_AI_Architecture_and_System_Design.pdf', 
+    type: 'PDF', 
+    size: '1.2 MB', 
+    summary: 'Full system architecture, 8-step request flow pipeline, technology layers (React, Node, scikit-learn, MongoDB), and 7 primary database collections.' 
+  },
 ];
 
 export const chatThreads = [];

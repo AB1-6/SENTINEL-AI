@@ -212,8 +212,15 @@ export default function AssistantPage() {
   const [showKeyModal, setShowKeyModal] = useState(false);
   const [tempKeyInput, setTempKeyInput] = useState('');
 
-  // Active documents (Initialized empty - no fake documents)
-  const [attachedFiles, setAttachedFiles] = useState([]);
+  // Active documents (Connected to verified enterprise project documents)
+  const [attachedFiles, setAttachedFiles] = useState([
+    'Sentinel_Company_Policy_Rules_and_Regulations_2026.pdf',
+    'Company_Identity_Products_and_Clients.pdf',
+    'Enterprise_Cluster_SLA_Rosewood_Cloud_INV-2026-002.pdf',
+    'FinOps_Copilot_Master_Agreement_JoyNex_Retail_INV-2026-003.pdf',
+    'SaaS_Agreement_Apex_CyberLogix_INV-2026-001.pdf',
+    'Sentinel_AI_2.0_Machine_Learning_and_Security_Blueprint.pdf',
+  ]);
 
   useEffect(() => {
     api.get('/chat/key-status')

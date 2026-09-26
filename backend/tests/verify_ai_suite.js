@@ -277,6 +277,86 @@ async function runTestSuite() {
     assert(!bAdmin.text.includes('Enterprise People & Organization Directory'), 'Backend does NOT dump people directory');
   }
 
+  // Test 25: Direct Collection Priority ("which payment should be collected first?")
+  console.log('\nTest 25: Direct Collection Priority ("which payment should be collected first?")');
+  {
+    const qPriority = 'which payment should be collected first?';
+    const resp = generateResponse(qPriority);
+    assert(resp.includes('Angel Rose Biju') && resp.includes('INV-2026-002'), 'Directly prioritizes Angel Rose Biju (INV-2026-002)');
+    assert(resp.includes('₹1,20,000'), 'Identifies ₹1,20,000 outstanding amount');
+    assert(resp.includes('49.4%'), 'Explains 49.4% receivables concentration');
+    assert(resp.includes('Diya Joy'), 'Identifies Diya Joy as #2 priority');
+    assert(!resp.includes('Sentinel AI Automated Financial Operations Status'), 'Does NOT output generic overview card');
+
+    const bResp = await generateAiResponse(qPriority);
+    assert(bResp.text.includes('Angel Rose Biju') && bResp.text.includes('INV-2026-002'), 'Backend directly prioritizes Angel Rose Biju');
+    assert(bResp.text.includes('₹1,20,000'), 'Backend identifies ₹1,20,000 amount');
+    assert(!bResp.text.includes('Sentinel AI Automated Financial Operations Status'), 'Backend does NOT output generic overview card');
+
+    const respWhoCollect = generateResponse('who to collect first?');
+    assert(respWhoCollect.includes('Angel Rose Biju'), 'Answers "who to collect first?" with Angel Rose Biju');
+  }
+
+  // Test 26: Client Purchases Knowledge ("what did Angel buy?")
+  console.log('\nTest 26: Client Purchases Knowledge (from company_identity_and_clients.md)');
+  {
+    const respAngel = generateResponse('what did Angel Rose Biju buy?');
+    assert(respAngel.includes('Sentinel Enterprise Cluster') && respAngel.includes('Client-Side PII Redactor'), 'Identifies Angel Rose Biju purchased Enterprise Cluster & PII Redactor');
+    assert(respAngel.includes('99.99%'), 'Mentions 99.99% SecOps SLA');
+
+    const respDiya = generateResponse('what did Diya Joy buy?');
+    assert(respDiya.includes('Gemma SME Cashflow Copilot') || respDiya.includes('AI Support Shield'), 'Identifies Diya Joy purchased FinOps Copilot & Support Shield');
+
+    const respAnlin = generateResponse('what did Anlin buy?');
+    assert(respAnlin.includes('Sentinel AI Gateway Pro'), 'Identifies Anlin purchased Gateway Pro');
+  }
+
+  // Test 27: Commercial Products Sold (from company_identity_and_clients.md)
+  console.log('\nTest 27: Commercial Products Sold by Sentinel AI');
+  {
+    const resp = generateResponse('what products does Sentinel AI sell?');
+    assert(resp.includes('Sentinel AI Gateway Pro'), 'Includes Sentinel AI Gateway Pro');
+    assert(resp.includes('Enterprise Client-Side PII Redaction Suite'), 'Includes PII Redaction Suite');
+    assert(resp.includes('Gemma SME Cashflow & Solvency Copilot'), 'Includes Gemma SME Copilot');
+    assert(resp.includes('Automated Multi-Channel Outreach Dispatcher'), 'Includes Outreach Dispatcher');
+  }
+
+  // Test 28: Outreach Strategies (from company_identity_and_clients.md & policy)
+  console.log('\nTest 28: Outreach Strategies & Delinquency Tiers');
+  {
+    const respAngel = generateResponse('what is the outreach strategy for Angel Rose Biju?');
+    assert(respAngel.includes('Medium Polite') && respAngel.includes('UTR'), 'Identifies Medium Polite / Firm Reminder requesting UTR');
+
+    const respDiya = generateResponse('what is the outreach strategy for Diya Joy?');
+    assert(respDiya.includes('Strict Demand') || respDiya.includes('Final 48-Hour Notice') || respDiya.includes('Not-So-Polite'), 'Identifies Strict Final Notice with suspension warning');
+  }
+
+  // Test 29: Machine Learning Blueprint (from about project.js)
+  console.log('\nTest 29: Machine Learning Blueprint (4 Pillars, 8 Attacks, LoRA Fine-Tuning)');
+  {
+    const respML = generateResponse('how is this project related to machine learning?');
+    assert(respML.includes('ML Heuristic Prompt Scoring') && respML.includes('RAG') && respML.includes('Vector Embeddings'), 'Identifies ML pillars (Heuristic scoring & RAG embeddings)');
+    assert(respML.includes('RLHF') && respML.includes('100Hz telemetry'), 'Identifies RLHF guardrails & 100Hz telemetry');
+
+    const respAttacks = generateResponse('what attacks does this project stop?');
+    assert(respAttacks.includes('Jailbreaks') && respAttacks.includes('Indirect Prompt Injection'), 'Identifies prompt injection attacks');
+    assert(respAttacks.includes('XSS') && respAttacks.includes('SQL'), 'Identifies code-based attacks (XSS & SQLi)');
+
+    const respTrain = generateResponse('how to train or fine-tune our custom AI model?');
+    assert(respTrain.includes('PEFT') || respTrain.includes('LoRA'), 'Identifies PEFT / LoRA fine-tuning');
+    assert(respTrain.includes('Gemma') || respTrain.includes('Llama'), 'References target models (Gemma/Llama)');
+  }
+
+  // Test 30: System Architecture & Data Model (from architecture.md & schema.md)
+  console.log('\nTest 30: System Architecture & Data Model');
+  {
+    const respArch = generateResponse('what is the request flow?');
+    assert(respArch.includes('JWT') && respArch.includes('Rate Limiting') && respArch.includes('Risk Scoring'), 'Details request pipeline from JWT to Risk Scoring');
+
+    const respSchema = generateResponse('what are the database collections?');
+    assert(respSchema.includes('Users') && respSchema.includes('SecurityLogs') && respSchema.includes('Alerts'), 'Details primary database collections');
+  }
+
   console.log('\n=============================================================');
   console.log(`📊 TEST SUITE SUMMARY: ${passed} PASSED, ${failed} FAILED`);
   console.log('=============================================================\n');
