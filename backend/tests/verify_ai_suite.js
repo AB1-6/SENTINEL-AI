@@ -257,6 +257,26 @@ async function runTestSuite() {
     assert(bResp.text.includes('Zero-Trust Security Gateway') && bResp.text.includes('₹85,000'), 'Backend answers "whats the project status now" with full status breakdown');
   }
 
+  // Test 24: Direct Concise Answer for Admin & Individual Identity
+  console.log('\nTest 24: Direct Concise Answer for Admin & Individual Queries');
+  {
+    const qAdmin = 'whats the name of the admin?';
+    const resp = generateResponse(qAdmin);
+    assert(resp.includes('Anlin Punne') && resp.includes('anlinpunneli@gmail.com'), 'Returns Super Administrator Anlin Punne');
+    assert(!resp.includes('Enterprise People & Organization Directory'), 'Does NOT dump people directory table/header');
+    assert(!resp.includes('Alex Mercer') && !resp.includes('Elena Rostova') && !resp.includes('Angel Rose Biju'), 'Does NOT output unrelated staff or clients');
+
+    const respWhoAdmin = generateResponse('who is the admin?');
+    assert(respWhoAdmin.includes('Anlin Punne'), 'Answers "who is the admin?" with Anlin Punne');
+
+    const respFounder = generateResponse('who is the founder?');
+    assert(respFounder.includes('Anlin Punne'), 'Answers "who is the founder?" with Anlin Punne');
+
+    const bAdmin = await generateAiResponse(qAdmin);
+    assert(bAdmin.text.includes('Anlin Punne') && bAdmin.text.includes('anlinpunneli@gmail.com'), 'Backend answers "whats the name of the admin?" concisely');
+    assert(!bAdmin.text.includes('Enterprise People & Organization Directory'), 'Backend does NOT dump people directory');
+  }
+
   console.log('\n=============================================================');
   console.log(`📊 TEST SUITE SUMMARY: ${passed} PASSED, ${failed} FAILED`);
   console.log('=============================================================\n');

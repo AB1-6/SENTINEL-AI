@@ -16,7 +16,7 @@ import {
   Sparkles, Key, Check, ExternalLink, X, Cpu, ShieldCheck, 
   ShieldAlert, Shield, AlertTriangle, Terminal, ChevronRight, 
   Copy, RotateCcw, Paperclip, Send, Sliders, Zap, Lock, Eye, FileText,
-  Plus, History, Download, MessageSquare, LogOut
+  Plus, History, Download, MessageSquare, LogOut, Trash2
 } from 'lucide-react';
 import { redactPII } from '@/utils/piiRedactor';
 
@@ -169,6 +169,26 @@ export default function AssistantPage() {
     pushToast('✨ Started a new conversation session', 'success');
   };
 
+  const handleClearCurrentChat = () => {
+    playClickSound();
+    setMessages(initialMessages);
+    chatHistoryService.deleteThread(sessionId);
+    const newThread = chatHistoryService.createThread({
+      title: 'New Conversation',
+      messages: initialMessages,
+    });
+    setSessionId(newThread.id);
+    setSessionTitle(newThread.title);
+    setPrompt('');
+    pushToast('Cleared chat conversation', 'info');
+  };
+
+  const removeAttachedFile = (docName) => {
+    playClickSound();
+    setAttachedFiles((prev) => prev.filter((d) => d !== docName));
+    pushToast(`Removed "${docName}" from active context`, 'info');
+  };
+
   const handleExportCurrentChat = () => {
     playChimeSound();
     chatHistoryService.exportThreadAsMarkdown({
@@ -192,8 +212,8 @@ export default function AssistantPage() {
   const [showKeyModal, setShowKeyModal] = useState(false);
   const [tempKeyInput, setTempKeyInput] = useState('');
 
-  // Active documents
-  const [attachedFiles, setAttachedFiles] = useState(['Enterprise_Security_Playbook_2026.txt', 'Q3_Financial_Audit_Report.txt']);
+  // Active documents (Initialized empty - no fake documents)
+  const [attachedFiles, setAttachedFiles] = useState([]);
 
   useEffect(() => {
     api.get('/chat/key-status')
@@ -604,6 +624,16 @@ export default function AssistantPage() {
 
                 <button
                   type="button"
+                  onClick={handleClearCurrentChat}
+                  className="flex items-center gap-1.5 rounded-xl border border-rose-900/40 bg-rose-950/30 px-3 py-1.5 text-xs font-medium text-rose-400 hover:bg-rose-900/50 hover:text-rose-200 transition"
+                  title="Clear all messages in this conversation session"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Clear Chat
+                </button>
+
+                <button
+                  type="button"
                   onClick={() => {
                     playClickSound();
                     navigate('/history');
@@ -747,14 +777,26 @@ export default function AssistantPage() {
 
               {/* Context bar & document chips */}
               <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
-                <div className="flex items-center gap-2">
-                  <Paperclip className="h-3.5 w-3.5 text-slate-500" />
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Paperclip className="h-3.5 w-3.5 text-slate-500 shrink-0" />
                   <span className="font-medium text-slate-300">Active Documents:</span>
-                  {attachedFiles.map((doc) => (
-                    <span key={doc} className="rounded-md border border-slate-800 bg-slate-900 px-2 py-0.5 text-[11px] text-slate-300">
-                      {doc}
-                    </span>
-                  ))}
+                  {attachedFiles.length > 0 ? (
+                    attachedFiles.map((doc) => (
+                      <span key={doc} className="inline-flex items-center gap-1 rounded-md border border-slate-800 bg-slate-900 px-2 py-0.5 text-[11px] text-slate-300">
+                        {doc}
+                        <button
+                          type="button"
+                          onClick={() => removeAttachedFile(doc)}
+                          className="text-slate-500 hover:text-rose-400 ml-0.5 transition"
+                          title={`Remove ${doc} from active context`}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-[11px] text-slate-500 italic">None</span>
+                  )}
                 </div>
                 <span>{conversationSummary} user messages inspected</span>
               </div>

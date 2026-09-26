@@ -88,17 +88,6 @@ export const mockStore = {
       summary: 'Gemma SME Cashflow Copilot & AI Support Shield agreement with JoyNex Digital Retail Ltd. (Diya Joy, Ops Dir). Annual tier ₹78,000 with critical default escalation clause.',
       createdAt: now,
     },
-    {
-      _id: 'doc-5',
-      userId: 'user-admin',
-      originalName: 'Enterprise_Security_Playbook_2026.pdf',
-      filename: 'enterprise_security_playbook_2026.pdf',
-      mimeType: 'application/pdf',
-      size: 4089446,
-      path: '/uploads/enterprise_security_playbook_2026.pdf',
-      summary: 'Zero-trust incident response protocols, heuristic prompt firewall thresholds, and Q3 financial solvency audit benchmarks.',
-      createdAt: now,
-    },
   ],
   securityLogs: [
     {

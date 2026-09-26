@@ -63,20 +63,9 @@ export const documents = [
     size: '2.1 MB', 
     summary: 'Gemma SME Cashflow Copilot & AI Support Shield agreement with JoyNex Digital Retail Ltd. (Diya Joy, Ops Dir). Annual tier ₹78,000 with critical default escalation clause.' 
   },
-  { 
-    id: 'doc-5', 
-    name: 'Enterprise_Security_Playbook_2026.pdf', 
-    type: 'PDF', 
-    size: '3.9 MB', 
-    summary: 'Zero-trust incident response protocols, heuristic prompt firewall thresholds, and Q3 financial solvency audit benchmarks.' 
-  },
 ];
 
-export const chatThreads = [
-  { id: 'chat-1', title: 'Summarize HR Policy', preview: 'I need a concise summary of the employee handbook.', updatedAt: '10:42 AM' },
-  { id: 'chat-2', title: 'Draft Security Notice', preview: 'Create a company-wide reminder about phishing.', updatedAt: '09:18 AM' },
-  { id: 'chat-3', title: 'Analyze Vendor Contract', preview: 'Extract risk factors from the attached contract.', updatedAt: 'Yesterday' },
-];
+export const chatThreads = [];
 
 export const users = [
   { id: 'user-1', name: 'Anlin Punne', email: 'anlinpunneli@gmail.com', role: 'Super Administrator (RBAC)', status: 'Active (Owner)' },

@@ -6,65 +6,7 @@
 const STORAGE_KEY = 'sentinel.chatThreads';
 const ACTIVE_THREAD_KEY = 'sentinel.activeThreadId';
 
-export const DEFAULT_THREADS = [
-  {
-    id: 'thread-debtors-audit',
-    title: 'Outstanding Debtors & Collections Audit',
-    preview: 'Analysis of overdue invoices for Angel Rose Biju, Diya Joy, and Anlin totaling ₹2,43,000.',
-    updatedAt: 'Today at 08:45 PM',
-    timestamp: Date.now() - 3600000,
-    messages: [
-      {
-        role: 'user',
-        content: 'who all are there to pay money?',
-        meta: { timestamp: '08:44 PM', riskScore: 4 }
-      },
-      {
-        role: 'assistant',
-        content: `### 📋 Outstanding Client Receivables & Debtors\n\nThere are currently **3 client accounts with overdue payments**, totaling **₹2,43,000** in uncollected revenue:\n\n| Client & Company | Invoice ID | Amount Due | Delay / Overdue | Risk Tier | Action Tier |\n| :--- | :--- | :--- | :--- | :--- | :--- |\n| **Angel Rose Biju**<br>*Rosewood Cloud Systems Inc.* | \`INV-2026-002\` | **₹1,20,000** | **18 days overdue** | 🟡 Medium | Medium Firm Follow-up |\n| **Diya Joy**<br>*JoyNex Digital Retail Ltd.* | \`INV-2026-003\` | **₹78,000** | **42 days overdue** | 🔴 Critical | Strict Final Notice |\n| **Anlin**<br>*Apex CyberLogix Solutions Pvt. Ltd.* | \`INV-2026-001\` | **₹45,000** | **6 days overdue** | 🟢 Low | Polite Check-in |\n\n#### 📊 Portfolio Overview & Cashflow Impact:\n- **Total Overdue Receivables**: **₹2,43,000** across 3 accounts\n- **Current Operational Cash**: **₹85,000** (61 days of runway)\n- **Top Financial Exposure**: **Angel Rose Biju / Rosewood Cloud Systems** (₹1,20,000 — **49.4%** of total overdue)\n- **Longest Delinquency**: **Diya Joy / JoyNex Digital Retail** (₹78,000 — **42 days overdue**)\n- **Runway Post-Collection**: Collecting all 3 accounts extends runway from **61 Days to 234 Days (~7.8 months)**!`,
-        meta: { verified: true, latency: 18, model: 'Sentinel Gateway', timestamp: '08:45 PM' }
-      }
-    ]
-  },
-  {
-    id: 'thread-company-policy',
-    title: 'Company Policy & Rules (POL-2026-V2.0)',
-    preview: 'Review of Net-30 credit terms, delay penalty tiers, and Level 1-5 RBAC security matrix.',
-    updatedAt: 'Today at 03:15 PM',
-    timestamp: Date.now() - 21600000,
-    messages: [
-      {
-        role: 'user',
-        content: 'what is our company policy on payment delays?',
-        meta: { timestamp: '03:14 PM', riskScore: 4 }
-      },
-      {
-        role: 'assistant',
-        content: `### 📜 Sentinel AI Technologies Inc. — Corporate Policy (Doc #POL-2026-V2.0)\n\nUnder **Article III: Enterprise Invoicing & Credit Terms (Net-30 Standard)**:\n- **Standard Term**: Net-30 from invoice issuance.\n- **Slight Delay (1-10 Days)**: Friendly AP courtesy check-in (Polite Message). Grace period applies.\n- **Moderate Delay (11-30 Days)**: Firm notice with requirement for payment UTR verification within 5 business days.\n- **Critical Delay (30+ Days)**: Automatic 48-hour cure notice warning of Copilot API quota suspension and legal escalation.\n- **Official Financial Remittance Contact**: \`sentinalai2.0@gmail.com\`.`,
-        meta: { verified: true, latency: 22, model: 'Sentinel Gateway', timestamp: '03:15 PM' }
-      }
-    ]
-  },
-  {
-    id: 'thread-stress-test',
-    title: 'Cash Runway & 30-Day Delay Stress Test',
-    preview: 'Evaluation of 61-day baseline runway and top client 30-day payment delay impact.',
-    updatedAt: 'Yesterday at 05:20 PM',
-    timestamp: Date.now() - 86400000,
-    messages: [
-      {
-        role: 'user',
-        content: 'What happens if our top client delays payment by 30 days?',
-        meta: { timestamp: '05:19 PM', riskScore: 5 }
-      },
-      {
-        role: 'assistant',
-        content: `### ⚠️ Stress Test: 30-Day Top Client Payment Delay\n\n- **Client**: Angel Rose Biju (Rosewood Cloud Systems Inc. — ₹1,20,000)\n- **Baseline Liquid Balance**: ₹85,000 (61 days runway)\n- **Impact at Day 30**: Operational balance plunges to **₹7,000** (runway collapses from 61 days to **~5 days**).\n- **Risk Classification**: **CRITICAL INSOLVENCY ALERT**.\n- **Recommended Action**: Trigger 1-Click Autonomous Solvency Auto-Pilot immediately from Financial Operations.`,
-        meta: { verified: true, latency: 19, model: 'Sentinel Gateway', timestamp: '05:20 PM' }
-      }
-    ]
-  }
-];
+export const DEFAULT_THREADS = [];
 
 function notifyStorageChange() {
   if (typeof window !== 'undefined') {
@@ -76,19 +18,17 @@ export const chatHistoryService = {
   getThreads() {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (!raw) {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_THREADS));
-        return DEFAULT_THREADS;
+      if (raw === null) {
+        return [];
       }
       const parsed = JSON.parse(raw);
-      if (!Array.isArray(parsed) || parsed.length === 0) {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_THREADS));
-        return DEFAULT_THREADS;
+      if (!Array.isArray(parsed)) {
+        return [];
       }
       return parsed.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
     } catch (e) {
       console.warn('Failed to read chat threads:', e);
-      return DEFAULT_THREADS;
+      return [];
     }
   },
 
