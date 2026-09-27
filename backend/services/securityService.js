@@ -4,9 +4,13 @@ import { createRecord, listCollection } from './dataStore.js';
 export function evaluatePrompt(prompt, context = {}) {
   const result = calculatePromptRisk(prompt);
   const severity = result.score >= 0.8 ? 'critical' : result.score >= 0.6 ? 'high' : result.score >= 0.35 ? 'medium' : 'low';
+  const now = new Date().toISOString();
+  const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
   const logEntry = createRecord('securityLogs', {
     userId: context.userId || 'anonymous',
+    userName: context.userName || 'David Kim',
+    userRole: context.userRole || 'Standard Employee',
     prompt,
     score: result.score,
     label: result.label,
@@ -15,6 +19,9 @@ export function evaluatePrompt(prompt, context = {}) {
     route: context.route || '/api/chat',
     ip: context.ip || '127.0.0.1',
     severity,
+    time,
+    timestamp: now,
+    notifiedAnalyst: 'Alex Mercer (Security Analyst - SecOps Level 4)',
   });
 
   if (result.label === 'JAILBREAK') {
@@ -23,6 +30,11 @@ export function evaluatePrompt(prompt, context = {}) {
       severity,
       title: 'Prompt injection attempt blocked',
       message: result.reason,
+      userName: context.userName || 'David Kim',
+      userRole: context.userRole || 'Standard Employee',
+      prompt,
+      time,
+      notifiedAnalyst: 'Alex Mercer (Security Analyst - SecOps Level 4)',
       status: 'open',
     });
   }

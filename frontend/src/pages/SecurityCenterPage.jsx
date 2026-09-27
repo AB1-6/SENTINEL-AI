@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import GlassCard from '@/components/GlassCard';
 import SectionHeader from '@/components/SectionHeader';
 import StatCard from '@/components/StatCard';
@@ -8,10 +8,17 @@ import {
   ShieldCheck, ShieldAlert, Award, Radio, Server, CheckCircle2, 
   ExternalLink, Search, Download, RefreshCw, Send, AlertTriangle, 
   Lock, Eye, Terminal, Play, Plus, Sliders, Check, X, Flame, 
-  Zap, FileCheck, Radar, ShieldX, Sparkles
+  Zap, FileCheck, Radar, ShieldX, Sparkles, User, Clock, AlertOctagon
 } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { playClickSound, playChimeSound, playScanSound, playErrorSound } from '@/utils/soundEffects';
+import { 
+  getThreatIncidents, 
+  subscribeThreatIncidents, 
+  recordThreatIncident, 
+  updateIncidentStatus 
+} from '@/services/incidentResponseService';
 
 const RED_TEAM_ATTACK_SUITE = [
   {
@@ -178,9 +185,20 @@ const DEFAULT_POLICIES = [
 ];
 
 export default function SecurityCenterPage() {
-  const [activeTab, setActiveTab] = useState('redteam'); // 'redteam' | 'owasp' | 'compliance' | 'policies' | 'siem' | 'audit'
+  const { user: currentUser } = useAuth();
+  const [activeTab, setActiveTab] = useState('redteam'); // 'redteam' | 'owasp' | 'compliance' | 'policies' | 'siem' | 'audit' | 'incidents'
   const [searchTerm, setSearchTerm] = useState('');
   const [testingPing, setTestingPing] = useState(null);
+
+  // Threat System Incident Response State
+  const [incidents, setIncidents] = useState(() => getThreatIncidents());
+  const [incidentFilter, setIncidentFilter] = useState('ALL');
+  const [incidentSearch, setIncidentSearch] = useState('');
+  const [selectedIncidentModal, setSelectedIncidentModal] = useState(null);
+
+  useEffect(() => {
+    return subscribeThreatIncidents((updated) => setIncidents(updated));
+  }, []);
 
   // Adversarial Red Team Suite States
   const [redTeamRunning, setRedTeamRunning] = useState(false);
@@ -278,7 +296,18 @@ export default function SecurityCenterPage() {
 
     if (isBlocked) {
       playErrorSound();
-      pushToast(`🚨 Attack Intercepted: ${result.label}`, 'danger');
+      const inc = recordThreatIncident({
+        prompt: customAttackPrompt,
+        user: currentUser || { name: 'Alex Mercer', email: 'alex.mercer@sentinel.local', role: 'Security Analyst' },
+        classification: result,
+        score: Math.round(result.score * 100),
+        source: 'Security Center Red-Team Lab',
+        rule: `RULE-REDTEAM_${result.label}`,
+        action: 'HARD_DROP & AUDIT_LOG',
+        ip: '10.0.12.99',
+        severity: 'CRITICAL',
+      });
+      pushToast(`🚨 Attack Intercepted: ${result.label} (Incident #${inc.id} logged with User: ${currentUser?.name || 'Alex Mercer'} & Time)`, 'danger');
     } else {
       pushToast('Prompt cleared by Zero-Trust gateway', 'success');
     }
@@ -437,6 +466,18 @@ export default function SecurityCenterPage() {
             >
               <ShieldCheck className="h-4 w-4" />
               Audit Register
+            </button>
+
+            <button
+              onClick={() => { playClickSound(); setActiveTab('incidents'); }}
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 transition ${
+                activeTab === 'incidents'
+                  ? 'bg-rose-500 text-white font-semibold shadow-lg shadow-rose-500/20'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <AlertOctagon className="h-4 w-4" />
+              Incident Response ({incidents.length})
             </button>
           </div>
 
@@ -1018,6 +1059,193 @@ export default function SecurityCenterPage() {
                   </div>
                 </div>
               ))}
+            </div>
+          </GlassCard>
+        </div>
+      )}
+
+      {/* TAB 6: Threat System Incident Response Console */}
+      {activeTab === 'incidents' && (
+        <div className="space-y-6">
+          {/* Incident Telemetry Summary */}
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <GlassCard className="p-4 border-slate-800">
+              <span className="text-[11px] font-mono text-slate-400">Total Recorded Risks</span>
+              <p className="mt-1 text-2xl font-bold text-white font-display">{incidents.length}</p>
+              <p className="mt-1 text-[11px] text-sky-400 font-mono">Zero-Trust Telemetry Active</p>
+            </GlassCard>
+            <GlassCard className="p-4 border-slate-800">
+              <span className="text-[11px] font-mono text-slate-400">Critical Threats</span>
+              <p className="mt-1 text-2xl font-bold text-rose-400 font-display">
+                {incidents.filter((i) => i.severity === 'CRITICAL').length}
+              </p>
+              <p className="mt-1 text-[11px] text-rose-300 font-mono">Hard-Dropped at Gateway</p>
+            </GlassCard>
+            <GlassCard className="p-4 border-slate-800">
+              <span className="text-[11px] font-mono text-slate-400">Security Analyst Dispatches</span>
+              <p className="mt-1 text-2xl font-bold text-emerald-400 font-display">
+                {incidents.filter((i) => i.notifiedAnalyst).length}
+              </p>
+              <p className="mt-1 text-[11px] text-emerald-300 font-mono">Alex Mercer (SecOps L4)</p>
+            </GlassCard>
+            <GlassCard className="p-4 border-slate-800">
+              <span className="text-[11px] font-mono text-slate-400">Interception SLA</span>
+              <p className="mt-1 text-2xl font-bold text-cyan-300 font-display">100%</p>
+              <p className="mt-1 text-[11px] text-cyan-200 font-mono">Pre-LLM Inference Drop</p>
+            </GlassCard>
+          </div>
+
+          <GlassCard className="p-6 border-slate-800">
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-800">
+              <div>
+                <SectionHeader 
+                  eyebrow="SecOps Incident Response" 
+                  title="Recorded Prompt Risks & Forensic Stream" 
+                  description="All recorded adversarial prompt vectors with originating user name, exact incident time, threat classification, and live Security Analyst dispatch notifications." 
+                />
+              </div>
+            </div>
+
+            {/* Filter and Search Bar */}
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-1 rounded-xl bg-slate-950 p-1 border border-slate-800 text-xs">
+                {['ALL', 'CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].map((sev) => (
+                  <button
+                    key={sev}
+                    onClick={() => {
+                      playClickSound();
+                      setIncidentFilter(sev);
+                    }}
+                    className={`rounded-lg px-2.5 py-1 transition ${
+                      incidentFilter === sev
+                        ? 'bg-rose-500 text-white font-semibold'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    {sev}
+                  </button>
+                ))}
+              </div>
+
+              <div className="relative min-w-[240px]">
+                <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-500" />
+                <input
+                  type="text"
+                  value={incidentSearch}
+                  onChange={(e) => setIncidentSearch(e.target.value)}
+                  placeholder="Filter by user name, prompt keyword, rule..."
+                  className="w-full rounded-xl border border-slate-800 bg-slate-950 py-1.5 pl-8 pr-3 text-xs text-white placeholder:text-slate-500 focus:border-rose-500 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            {/* Incidents Table / Cards */}
+            <div className="mt-4 space-y-3">
+              {incidents
+                .filter((item) => {
+                  const matchesSev = incidentFilter === 'ALL' || item.severity === incidentFilter;
+                  const q = incidentSearch.toLowerCase();
+                  const matchesQuery =
+                    item.title.toLowerCase().includes(q) ||
+                    item.rule.toLowerCase().includes(q) ||
+                    (item.userName && item.userName.toLowerCase().includes(q)) ||
+                    (item.user && item.user.toLowerCase().includes(q)) ||
+                    (item.rawPayload && item.rawPayload.toLowerCase().includes(q));
+                  return matchesSev && matchesQuery;
+                })
+                .map((inc) => {
+                  const isCrit = inc.severity === 'CRITICAL';
+                  const isHigh = inc.severity === 'HIGH';
+                  const isMed = inc.severity === 'MEDIUM';
+
+                  return (
+                    <div
+                      key={inc.id}
+                      className="rounded-xl border border-slate-800 bg-slate-950/70 p-4 transition hover:border-rose-500/40 hover:bg-slate-900/60"
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span
+                              className={`rounded-md px-2 py-0.5 text-[10px] font-mono font-bold uppercase ${
+                                isCrit
+                                  ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                                  : isHigh
+                                  ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                                  : isMed
+                                  ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30'
+                                  : 'bg-slate-800 text-slate-300'
+                              }`}
+                            >
+                              {inc.severity}
+                            </span>
+                            <span className="font-mono text-xs text-slate-400 font-bold">{inc.id}</span>
+                            <span className="text-xs text-slate-400 flex items-center gap-1 font-mono">
+                              <Clock className="h-3 w-3 text-slate-500" /> Time: {inc.time} ({inc.exactTime || ''})
+                            </span>
+                            <span className="rounded bg-slate-800 px-2 py-0.5 text-[9px] font-mono text-slate-300 uppercase">
+                              Status: {inc.status || 'INVESTIGATING'}
+                            </span>
+                          </div>
+
+                          <h5 className="mt-2 text-sm font-semibold text-white">{inc.title}</h5>
+
+                          {/* Prominent User Name and Time Banner */}
+                          <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-slate-300">
+                            <span className="flex items-center gap-1 text-sky-300 font-medium">
+                              <User className="h-3.5 w-3.5 text-sky-400" /> User: <span className="text-white font-bold">{inc.userName || inc.user || 'Unknown User'}</span>
+                              {inc.userRole && <span className="text-[11px] text-slate-400">({inc.userRole})</span>}
+                            </span>
+                            <span className="text-slate-600">•</span>
+                            <span className="text-slate-300 font-mono">
+                              Source: <span className="text-white font-medium">{inc.source}</span> (IP: {inc.ip})
+                            </span>
+                            <span className="text-slate-600">•</span>
+                            <span className="text-slate-300 font-mono">
+                              Rule: <span className="text-sky-300">{inc.rule}</span>
+                            </span>
+                          </div>
+
+                          {/* Raw Prompt Payload Snippet */}
+                          {inc.rawPayload && (
+                            <div className="mt-2.5 rounded-xl border border-rose-500/20 bg-rose-950/20 p-3 font-mono text-xs text-rose-200 break-words">
+                              <span className="font-bold text-rose-400 mr-2">Recorded Risk Prompt:</span>
+                              "{inc.rawPayload}"
+                            </div>
+                          )}
+
+                          {/* Security Analyst Dispatch Confirmation */}
+                          <div className="mt-2 flex items-center gap-1.5 text-xs text-emerald-400 font-mono">
+                            <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
+                            <span>Live Alert Dispatched to: <strong className="text-white">{inc.notifiedAnalyst || 'Alex Mercer (Security Analyst)'}</strong></span>
+                          </div>
+                        </div>
+
+                        <div className="shrink-0 text-right space-y-2">
+                          <span className="rounded bg-slate-800/80 px-2.5 py-1 text-xs font-mono font-bold text-slate-300">
+                            {inc.action}
+                          </span>
+                          <div>
+                            {inc.status !== 'RESOLVED' ? (
+                              <button
+                                onClick={() => {
+                                  updateIncidentStatus(inc.id, 'RESOLVED', 'Neutralized by Security Analyst');
+                                  playChimeSound();
+                                  pushToast(`Incident ${inc.id} marked as NEUTRALIZED`, 'success');
+                                }}
+                                className="rounded-lg bg-emerald-500/20 border border-emerald-500/30 px-3 py-1 text-xs font-medium text-emerald-300 hover:bg-emerald-500/30 transition"
+                              >
+                                Mark Resolved
+                              </button>
+                            ) : (
+                              <span className="text-[11px] font-mono text-emerald-400 font-medium">✓ Resolved</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
             </div>
           </GlassCard>
         </div>

@@ -11,6 +11,7 @@ import { useToast } from '@/contexts/ToastContext';
 import { useAiProvider } from '@/contexts/AiProviderContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { recordViolation, getUser } from '@/services/userSecurityService';
+import { recordThreatIncident } from '@/services/incidentResponseService';
 import { playClickSound, playScanSound, playErrorSound, playChimeSound } from '@/utils/soundEffects';
 import { 
   Sparkles, Key, Check, ExternalLink, X, Cpu, ShieldCheck, 
@@ -316,12 +317,34 @@ export default function AssistantPage() {
       playErrorSound();
 
       const userEmail = currentUser?.email || 'employee@sentinel.local';
+      const userName = currentUser?.name || (currentUser?.email ? currentUser.email.split('@')[0] : 'David Kim');
+      const userRole = currentUser?.role || 'Standard Employee';
+      const timeStr = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const dateStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+      // Record to centralized Threat System Incident Response
+      const loggedIncident = recordThreatIncident({
+        prompt: processedPrompt,
+        user: currentUser || { name: userName, email: userEmail, role: userRole },
+        classification,
+        score: riskScore,
+        source: 'Assistant Chat Gateway',
+        rule: `RULE-GATEWAY-BLOCK_${classification.label || 'JAILBREAK'}`,
+        action: 'HARD_DROP & AUDIT_LOG',
+        ip: '198.51.100.42',
+        severity: riskScore >= 80 ? 'CRITICAL' : 'HIGH',
+      });
+
       const violResult = recordViolation(userEmail, processedPrompt, classification);
 
-      if (violResult.isSuperAdmin) {
-        pushToast('🚨 Zero-Trust Interception: Prompt blocked before reaching LLM (Super Admin Active)', 'danger');
+      // Live notification feedback to user and Security Analyst
+      const isAnalyst = currentUser?.role === 'Security Analyst' || userEmail === 'alex.mercer@sentinel.local';
+      if (isAnalyst) {
+        pushToast(`🚨 [SecOps Alert] Risk prompt from ${userName} (${riskScore}/100) intercepted! Incident #${loggedIncident.id} logged.`, 'danger');
+      } else if (violResult.isSuperAdmin) {
+        pushToast(`🚨 Zero-Trust Interception: Prompt blocked! Security Analyst (Alex Mercer) live-notified. Logged as #${loggedIncident.id}.`, 'danger');
       } else if (violResult.suspended) {
-        pushToast('🛑 Zero-Trust Quarantine: 3/3 Violations Reached! Account Locked.', 'danger');
+        pushToast(`🛑 Zero-Trust Quarantine: 3/3 Violations Reached! Account Locked. Incident #${loggedIncident.id} logged.`, 'danger');
         setQuarantineModal({
           user: currentUser,
           prompt: processedPrompt,
@@ -330,9 +353,9 @@ export default function AssistantPage() {
         });
         setLogoutCountdown(5);
       } else if (violResult.strikes === 2) {
-        pushToast('🚨 Strike 2/3 Recorded! Critical Warning: Next violation will trigger auto-quarantine.', 'danger');
+        pushToast(`🚨 Strike 2/3 Recorded! Next violation will trigger quarantine. Incident #${loggedIncident.id} logged with Security Analyst.`, 'danger');
       } else {
-        pushToast('⚠️ Strike 1/3 Recorded: Adversarial prompt intercepted by Zero-Trust gateway.', 'warning');
+        pushToast(`⚠️ Strike 1/3 Recorded: Prompt risk intercepted & live-notified to Security Analyst (Alex Mercer). Incident #${loggedIncident.id}.`, 'warning');
       }
 
       setMessages((current) => {
@@ -340,11 +363,14 @@ export default function AssistantPage() {
           ...current, 
           { 
             role: 'assistant', 
-            content: `### 🛡️ Request Blocked by Zero-Trust Gateway\n\n**Security Reason**: Potential prompt injection or adversarial jailbreak pattern detected.\n- **Risk Score**: \`${riskScore}/100\`\n- **Classification**: \`${classification.label}\`\n- **Zero-Trust Strikes**: \`${violResult.strikes || 1}/3 Violations\` ${violResult.suspended ? '— 🚨 **ACCOUNT SUSPENDED**' : '— Warning Recorded'}\n- **Policy Action**: Zero-Trust gateway intercepted request prior to neural model transmission.\n\n${violResult.suspended ? '**CRITICAL NOTICE**: Your account has exceeded the 3-violation threshold and has been suspended. Only a Super Administrator (anlinpunneli@gmail.com) can readmit this account.' : '*Incident has been logged to the immutable SecOps audit trail.*'}`,
+            content: `### 🛡️ Request Blocked by Zero-Trust Gateway\n\n**Security Reason**: Potential prompt injection or adversarial jailbreak pattern detected.\n- **User Flagged**: \`${userName}\` (${userRole})\n- **Incident Time**: \`${dateStr} • ${timeStr}\`\n- **Incident ID**: \`${loggedIncident.id}\` (Logged to Threat System Incident Response)\n- **Live SecOps Alert**: 🚨 Live-notified to **Alex Mercer (Security Analyst - SecOps Level 4)**\n- **Risk Score**: \`${riskScore}/100\`\n- **Classification**: \`${classification.label}\`\n- **Zero-Trust Strikes**: \`${violResult.strikes || 1}/3 Violations\` ${violResult.suspended ? '— 🚨 **ACCOUNT SUSPENDED**' : '— Warning Recorded'}\n- **Policy Action**: Zero-Trust gateway intercepted request prior to neural model transmission.\n\n${violResult.suspended ? '**CRITICAL NOTICE**: Your account has exceeded the 3-violation threshold and has been suspended. Only a Super Administrator (anlinpunneli@gmail.com) can readmit this account.' : `*Incident has been logged to the Threat System Incident Response with User: "${userName}" at ${timeStr}. Live-notified to Security Analyst.*`}`,
             meta: {
               verified: false,
               blocked: true,
               riskScore,
+              incidentId: loggedIncident.id,
+              userName,
+              time: timeStr,
               latency: latencyEstimate,
               model: 'Zero-Trust Gatekeeper',
               timestamp: new Date().toLocaleTimeString()
@@ -355,6 +381,20 @@ export default function AssistantPage() {
         return next;
       });
       return;
+    }
+
+    if (!isBlocked && riskScore >= 40) {
+      recordThreatIncident({
+        prompt: processedPrompt,
+        user: currentUser || { name: currentUser?.name || 'David Kim', email: currentUser?.email || 'employee@sentinel.local', role: currentUser?.role || 'Standard Employee' },
+        classification,
+        score: riskScore,
+        source: 'Assistant Chat Gateway',
+        rule: `RULE-HEURISTIC-FLAG_${classification.label || 'SUSPICIOUS'}`,
+        action: 'INSPECT_AND_LOG',
+        ip: '198.51.100.42',
+        severity: 'MEDIUM',
+      });
     }
 
     setIsStreaming(true);

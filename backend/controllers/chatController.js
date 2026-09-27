@@ -12,7 +12,13 @@ import path from 'path';
 export const sendChat = asyncHandler(async (req, res) => {
   const { prompt = '', history = [], apiKey, conversationId, documentNames = [] } = req.body;
   const passedKey = apiKey || req.headers['x-gemini-key'] || process.env.GEMINI_API_KEY;
-  const security = evaluatePrompt(prompt, { userId: req.user?._id, route: '/api/chat', ip: req.ip });
+  const security = evaluatePrompt(prompt, { 
+    userId: req.user?._id || req.body.userId, 
+    userName: req.user?.name || req.body.userName || 'David Kim',
+    userRole: req.user?.role || req.body.userRole || 'Standard Employee',
+    route: '/api/chat', 
+    ip: req.ip 
+  });
 
   if (security.label === 'JAILBREAK') {
     throw new HttpError(403, 'Your request was blocked by Sentinel AI 2.0 security controls.', security.logEntry);

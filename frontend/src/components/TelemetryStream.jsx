@@ -21,6 +21,27 @@ export default function TelemetryStream({ className = '' }) {
   const [logs, setLogs] = useState(INITIAL_LOGS);
 
   useEffect(() => {
+    function handleLiveThreat(e) {
+      const inc = e.detail?.incident;
+      if (!inc) return;
+      const now = inc.exactTime || new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      setLogs((prev) => [
+        {
+          id: Date.now(),
+          time: now,
+          type: 'THREAT',
+          status: 'BLOCKED',
+          text: `Risk prompt by "${inc.userName || 'User'}" at ${now} intercepted. SecOps Analyst notified.`,
+          tone: 'rose',
+        },
+        ...prev.slice(0, 7),
+      ]);
+    }
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('sentinel:analyst-live-threat', handleLiveThreat);
+    }
+
     const interval = setInterval(() => {
       const randomEvent = STREAM_EVENTS[Math.floor(Math.random() * STREAM_EVENTS.length)];
       const now = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -31,7 +52,12 @@ export default function TelemetryStream({ className = '' }) {
       ]);
     }, 4000);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('sentinel:analyst-live-threat', handleLiveThreat);
+      }
+    };
   }, []);
 
   return (
@@ -58,14 +84,18 @@ export default function TelemetryStream({ className = '' }) {
             <span className="text-[10px] text-slate-500">{log.time || 'JUST NOW'}</span>
             <span
               className={`rounded px-1.5 py-0.5 text-[10px] font-bold tracking-wider uppercase ${
-                log.tone === 'emerald'
+                log.tone === 'rose'
+                  ? 'bg-rose-500/20 text-rose-400 border border-rose-500/40 animate-pulse'
+                  : log.tone === 'emerald'
                   ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
                   : 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30'
               }`}
             >
               [{log.type}:{log.status}]
             </span>
-            <span className="text-slate-300 truncate max-w-full">{log.text}</span>
+            <span className={`text-xs truncate max-w-full ${log.tone === 'rose' ? 'text-rose-200 font-medium' : 'text-slate-300'}`}>
+              {log.text}
+            </span>
           </div>
         ))}
       </div>
