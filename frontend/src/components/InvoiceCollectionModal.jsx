@@ -108,7 +108,7 @@ export default function InvoiceCollectionModal({ isOpen, onClose, invoice }) {
         message: activeDraft.message
       };
 
-      // Try relative API path first (works on Vercel and local proxy), fallback to port 8080 if on localhost
+      // Try relative API paths (works on Vercel and local proxy), fallback to port 8080 if on localhost
       let res = null;
       try {
         res = await fetch('/api/financial/send-invoice-notice', {
@@ -117,6 +117,16 @@ export default function InvoiceCollectionModal({ isOpen, onClose, invoice }) {
           body: JSON.stringify(payload)
         });
       } catch (_) {}
+
+      if (!res || !res.ok) {
+        try {
+          res = await fetch('/api/send-invoice-notice', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+        } catch (_) {}
+      }
 
       if ((!res || !res.ok) && typeof window !== 'undefined' && window.location.hostname === 'localhost') {
         try {
