@@ -25,15 +25,17 @@ export default function InvoiceCollectionModal({ isOpen, onClose, invoice }) {
   const [sending, setSending] = useState(false);
   const [dispatchLog, setDispatchLog] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [recipientEmail, setRecipientEmail] = useState('');
 
-  // Sync tone whenever modal opens or invoice changes
+  // Sync tone & contact whenever modal opens or invoice changes
   useEffect(() => {
     if (invoice && isOpen) {
       const rec = getRecommendedTone(invoice);
       setTone(rec);
+      setRecipientEmail(invoice.contact || '');
       setDispatchLog(null);
     }
-  }, [invoice?.id, isOpen]);
+  }, [invoice?.id, invoice?.contact, isOpen]);
 
   if (!isOpen || !invoice) return null;
 
@@ -55,29 +57,30 @@ export default function InvoiceCollectionModal({ isOpen, onClose, invoice }) {
       title: 'Polite Courtesy Check-in',
       badge: 'Recommended for 1–10 Days Delay',
       color: 'emerald',
-      subject: `Friendly Follow-up: Invoice ${invoice.id} (${amountStr}) - ${serviceName}`,
+      subject: `Account Statement: Invoice ${invoice.id} - Sentinel AI Technologies`,
       message: `Dear ${clientName}${companyName ? ` (${companyName})` : ''},\n\nHope you are having a productive week!\n\nThis is a gentle reminder regarding invoice ${invoice.id} for the amount of ${amountStr} for your ${serviceName} (${billingCycle}), which reached its due date ${days} days ago.\n\nWe understand accounts payable schedules can experience brief processing delays. We would appreciate it if you could verify the payment status with your accounts department.\n\nThank you for your valued partnership with Sentinel AI Technologies Inc.\n\nBest regards,\nAccounts Receivable & Finance Operations\nSentinel AI Technologies Inc. (sentinalai2.0@gmail.com)`
     },
     medium: {
       title: 'Medium Polite Formal Reminder',
       badge: 'Recommended for 11–30 Days Delay',
       color: 'amber',
-      subject: `Overdue Payment Notice: Invoice ${invoice.id} (${amountStr}) - ${days} Days Past Due`,
+      subject: `Payment Reminder: Invoice ${invoice.id} - Sentinel AI Operations`,
       message: `Hello ${clientName}${companyName ? ` (${companyName})` : ''},\n\nWe are writing to follow up on outstanding invoice ${invoice.id} (${amountStr}) for ${companyName}'s active subscription to ${serviceName} (${billingCycle}), which is now ${days} days overdue.\n\nOur records indicate this balance has been delayed past standard credit terms (${delayReason}). To ensure your enterprise security gateway remains in good standing without disruption to ongoing API quotas and firewall policies, please arrange for remittance by the end of this business week.\n\nIf remittance has already been scheduled, kindly share the payment UTR / reference number.\n\nSincerely,\nCredit Control Team\nSentinel AI Technologies Inc. (sentinalai2.0@gmail.com)`
     },
     urgent: {
       title: 'Strict Demand & Suspension Notice',
       badge: 'Recommended for 30+ Days Delay',
       color: 'rose',
-      subject: `FINAL NOTICE: Delinquent Invoice ${invoice.id} (${amountStr}) - Service Suspension Warning`,
+      subject: `Urgent Notice: Invoice ${invoice.id} - Sentinel AI Technologies`,
       message: `ATTENTION: ${clientName.toUpperCase()}${companyName ? ` · ${companyName.toUpperCase()}` : ''}\n\nInvoice ${invoice.id} for ${amountStr} covering your enterprise deployment of ${serviceName} (${billingCycle}) is critically delinquent by ${days} days past the agreed settlement terms with Sentinel AI Technologies Inc.\n\nThis account is flagged for chronic delay: ${delayReason}.\n\nImmediate settlement is required within 48 hours. Continued failure to clear this outstanding balance will result in automatic service suspension across all Sentinel AI gateway nodes, revoking of enterprise credit terms, and immediate escalation to our legal audit and debt recovery counsel.\n\nRemit payment immediately to avoid service interruption.\n\nCollections & Solvency Enforcement Bureau\nSentinel AI Technologies Inc. (sentinalai2.0@gmail.com)`
     }
   };
 
   const activeDraft = drafts[tone] || drafts.polite;
+  const targetEmail = (recipientEmail || clientEmail).trim();
 
   // Real Web Dispatch URLs
-  const mailtoLink = `mailto:${clientEmail}?subject=${encodeURIComponent(activeDraft.subject)}&body=${encodeURIComponent(activeDraft.message)}`;
+  const mailtoLink = `mailto:${targetEmail}?subject=${encodeURIComponent(activeDraft.subject)}&body=${encodeURIComponent(activeDraft.message)}`;
   const whatsappWebLink = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(activeDraft.message)}`;
 
   const handleCopyMessage = () => {
@@ -100,7 +103,7 @@ export default function InvoiceCollectionModal({ isOpen, onClose, invoice }) {
       const payload = {
         invoiceId: invoice.id,
         clientName,
-        to: clientEmail,
+        to: targetEmail,
         phone: clientPhone,
         channel,
         tone,
@@ -156,7 +159,7 @@ export default function InvoiceCollectionModal({ isOpen, onClose, invoice }) {
 
     if (channel === 'email') {
       if (deliveredViaSmtp) {
-        pushToast(`⚡ 1-Click Delivery SUCCESS: Real email delivered to ${clientEmail}!`, 'success');
+        pushToast(`⚡ Real email delivered to ${targetEmail}! Note: Check Spam / Junk folder if not visible in Primary.`, 'success');
       } else {
         pushToast(`⚠️ Delivery status: ${errorDetail || 'Server connection error. Ensure backend is deployed.'}`, 'error');
       }
@@ -169,7 +172,7 @@ export default function InvoiceCollectionModal({ isOpen, onClose, invoice }) {
     playChimeSound();
     setDispatchLog({
       recipient: clientName,
-      email: clientEmail,
+      email: targetEmail,
       phone: clientPhone,
       channel: channel.toUpperCase(),
       tone: tone.toUpperCase(),
@@ -249,13 +252,25 @@ export default function InvoiceCollectionModal({ isOpen, onClose, invoice }) {
                   </span>
                 </div>
 
-                {/* Contact Coordinates */}
-                <div className="pt-2 border-t border-slate-800/80 space-y-1 text-xs font-mono text-slate-300">
-                  <div className="flex items-center gap-1.5 truncate">
-                    <Mail className="h-3.5 w-3.5 text-sky-400 shrink-0" />
-                    <span className="truncate">{clientEmail}</span>
+                {/* Contact Coordinates & Editable Destination Email */}
+                <div className="pt-2 border-t border-slate-800/80 space-y-2 text-xs">
+                  <div>
+                    <label className="text-[10px] font-mono text-slate-400 block mb-1 font-semibold flex items-center justify-between">
+                      <span className="flex items-center gap-1 text-slate-300">
+                        <Mail className="h-3 w-3 text-sky-400" />
+                        Destination Email:
+                      </span>
+                      <span className="text-[9px] text-sky-400/90 font-mono">Editable</span>
+                    </label>
+                    <input
+                      type="email"
+                      value={recipientEmail}
+                      onChange={(e) => setRecipientEmail(e.target.value)}
+                      placeholder="client@company.com"
+                      className="w-full rounded-lg border border-slate-700 bg-slate-950/90 px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 font-mono transition"
+                    />
                   </div>
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 font-mono text-slate-400 text-[11px]">
                     <Phone className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
                     <span>{clientPhone}</span>
                   </div>
