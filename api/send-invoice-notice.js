@@ -1,7 +1,6 @@
 import nodemailer from 'nodemailer';
 
 export default async function handler(req, res) {
-  // CORS Headers
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
@@ -18,7 +17,12 @@ export default async function handler(req, res) {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
-  const { invoiceId, clientName, to, subject, message } = req.body || {};
+  let body = req.body;
+  if (typeof body === 'string') {
+    try { body = JSON.parse(body); } catch (_) {}
+  }
+
+  const { invoiceId, clientName, to, subject, message } = body || {};
 
   if (!to) {
     return res.status(400).json({ success: false, error: 'Recipient contact is required' });

@@ -82,10 +82,18 @@ export default function FinancialPage() {
     setAutoDispatching(true);
     setBatchResults(null);
     try {
-      const res = await apiFetch('/api/financial/auto-dispatch-all', {
+      let res = await apiFetch('/api/financial/auto-dispatch-all', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
+      if (!res || !res.ok) {
+        try {
+          res = await apiFetch('/api/auto-dispatch-all', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+          });
+        } catch (_) {}
+      }
       if (res && res.ok) {
         const data = await res.json();
         setBatchResults(data);
