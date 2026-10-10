@@ -1,10 +1,73 @@
 {
-  "buildCommand": "npm run build --workspace frontend",
-  "outputDirectory": "frontend/dist",
-  "rewrites": [
+  "version": 2,
+  "builds": [
     {
-      "source": "/((?!api/).*)",
-      "destination": "/index.html"
+      "src": "api/financial/send-invoice-notice.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "api/financial/auto-dispatch-all.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "api/send-invoice-notice.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "api/auto-dispatch-all.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "api/health.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "backend/app.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/financial/send-invoice-notice",
+      "dest": "/api/financial/send-invoice-notice.js"
+    },
+    {
+      "src": "/api/send-invoice-notice",
+      "dest": "/api/send-invoice-notice.js"
+    },
+    {
+      "src": "/api/financial/auto-dispatch-all",
+      "dest": "/api/financial/auto-dispatch-all.js"
+    },
+    {
+      "src": "/api/auto-dispatch-all",
+      "dest": "/api/auto-dispatch-all.js"
+    },
+    {
+      "src": "/api/health",
+      "dest": "/api/health.js"
+    },
+    {
+      "src": "/health",
+      "dest": "/api/health.js"
+    },
+    {
+      "src": "/api/(.*)",
+      "dest": "/backend/app.js"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/frontend/dist/index.html"
     }
   ]
 }
