@@ -93,6 +93,7 @@ export default function InvoiceCollectionModal({ isOpen, onClose, invoice }) {
     setSending(true);
 
     let deliveredViaSmtp = false;
+    let errorDetail = '';
 
     // Call backend API for 1-Click Silent Delivery
     try {
@@ -107,31 +108,48 @@ export default function InvoiceCollectionModal({ isOpen, onClose, invoice }) {
         message: activeDraft.message
       };
 
-      const res = await fetch('/api/financial/send-invoice-notice', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      }).catch(() => {
-        return fetch('http://localhost:8080/api/financial/send-invoice-notice', {
+      // Try relative API path first (works on Vercel and local proxy), fallback to port 8080 if on localhost
+      let res = null;
+      try {
+        res = await fetch('/api/financial/send-invoice-notice', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
-      });
+      } catch (_) {}
+
+      if ((!res || !res.ok) && typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+        try {
+          res = await fetch('http://localhost:8080/api/financial/send-invoice-notice', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+        } catch (_) {}
+      }
 
       if (res && res.ok) {
         const data = await res.json();
         if (data.emailResult?.success) {
           deliveredViaSmtp = true;
+        } else if (data.emailResult?.error) {
+          errorDetail = data.emailResult.error;
         }
+      } else if (res) {
+        const errJson = await res.json().catch(() => null);
+        errorDetail = errJson?.error || `HTTP ${res.status}`;
       }
     } catch (e) {
       console.warn('Backend notice sync:', e);
+      errorDetail = e.message;
     }
 
     if (channel === 'email') {
-      // 100% Autonomous Silent Dispatch - Never opens external Gmail tab
-      pushToast(`⚡ 1-Click Delivery SUCCESS: Real email notice delivered silently to ${clientEmail}!`, 'success');
+      if (deliveredViaSmtp) {
+        pushToast(`⚡ 1-Click Delivery SUCCESS: Real email delivered to ${clientEmail}!`, 'success');
+      } else {
+        pushToast(`⚠️ Delivery status: ${errorDetail || 'Server connection error. Ensure backend is deployed.'}`, 'error');
+      }
     } else {
       window.open(whatsappWebLink, '_blank');
       pushToast(`Outreach launched for ${clientName}! Opened WhatsApp with notice pre-filled.`, 'success');

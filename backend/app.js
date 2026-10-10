@@ -26,14 +26,14 @@ app.get('/health', (_req, res) => {
   res.json({ ok: true, service: 'sentinel-ai-2.0', time: new Date().toISOString() });
 });
 
-app.use('/api/auth', authRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/chat', chatRoutes);
-app.use('/api/documents', documentRoutes);
-app.use('/api/security', securityRoutes);
-app.use('/api/ml', mlRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/financial', financialRoutes);
+app.use(['/api/auth', '/auth'], authRoutes);
+app.use(['/api/dashboard', '/dashboard'], dashboardRoutes);
+app.use(['/api/chat', '/chat'], chatRoutes);
+app.use(['/api/documents', '/documents'], documentRoutes);
+app.use(['/api/security', '/security'], securityRoutes);
+app.use(['/api/ml', '/ml'], mlRoutes);
+app.use(['/api/users', '/users'], userRoutes);
+app.use(['/api/financial', '/financial'], financialRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

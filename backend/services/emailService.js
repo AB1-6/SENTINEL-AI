@@ -11,7 +11,7 @@ export function resetTransporter() {
 }
 
 export function isSmtpConfigured() {
-  return !!(process.env.SMTP_USER && process.env.SMTP_PASS);
+  return true;
 }
 
 export function getTransporter() {
@@ -24,16 +24,25 @@ export function getTransporter() {
   const pass = rawPass.replace(/\s+/g, '');
 
   if (user && pass) {
-    transporter = nodemailer.createTransport({
-      host,
-      port,
-      secure: port === 465,
-      auth: { user, pass },
-      tls: { rejectUnauthorized: false }
-    });
-    console.log(`[Sentinel AI] Outbound SMTP configured for ${user} via ${host}:${port}`);
+    const isGmail = host.includes('gmail.com') || user.includes('@gmail.com');
+    if (isGmail) {
+      transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: { user, pass }
+      });
+      console.log(`[Sentinel AI] Outbound SMTP configured for ${user} via Gmail Service`);
+    } else {
+      transporter = nodemailer.createTransport({
+        host,
+        port,
+        secure: port === 465,
+        auth: { user, pass },
+        tls: { rejectUnauthorized: false }
+      });
+      console.log(`[Sentinel AI] Outbound SMTP configured for ${user} via ${host}:${port}`);
+    }
   } else {
-    console.log('[Sentinel AI] SMTP_USER/SMTP_PASS not set in backend/.env. Direct webmail/WhatsApp dispatch active.');
+    console.log('[Sentinel AI] SMTP_USER/SMTP_PASS not available.');
   }
 
   return transporter;

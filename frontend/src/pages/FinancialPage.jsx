@@ -61,12 +61,20 @@ export default function FinancialPage() {
   const [batchResults, setBatchResults] = useState(null);
 
   const apiFetch = async (path, options = {}) => {
+    // Try relative API path first (works on Vercel production and Vite dev proxy)
     try {
-      const res = await fetch(`http://localhost:8080${path}`, options);
-      return res;
-    } catch (_) {
-      return fetch(path, options);
+      const res = await fetch(path, options);
+      if (res.ok) return res;
+    } catch (_) {}
+
+    // Fallback to localhost if developing locally
+    if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+      try {
+        return await fetch(`http://localhost:8080${path}`, options);
+      } catch (_) {}
     }
+
+    return fetch(path, options);
   };
 
   const handle1ClickAutoDispatch = async () => {
@@ -84,10 +92,12 @@ export default function FinancialPage() {
         playChimeSound();
         pushToast('⚡ 1-Click Auto-Pilot SUCCESS: Real emails delivered to all overdue accounts!', 'success');
       } else {
-        throw new Error('Backend dispatch returned non-ok');
+        const errJson = await res?.json().catch(() => null);
+        throw new Error(errJson?.error || `Server HTTP ${res?.status || '500'}`);
       }
     } catch (err) {
-      console.warn('Backend auto-dispatch executing local fallback:', err);
+      console.warn('Backend auto-dispatch failed:', err);
+      pushToast(`⚠️ Server dispatch notice: ${err.message}`, 'error');
       const simulatedResults = sampleInvoices
         .filter((inv) => inv.isOverdue || inv.overdueDays > 0)
         .map((inv) => {
