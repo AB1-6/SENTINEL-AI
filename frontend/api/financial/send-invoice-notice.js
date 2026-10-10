@@ -107,7 +107,7 @@ export default async function handler(req, res) {
 
     const cleanSubject = subject && !subject.includes('?') 
       ? subject 
-      : `Account Statement: Invoice ${invoiceId || 'INV-2026-001'} - Sentinel AI Technologies`;
+      : `Sentinel AI - Service update for ${invoiceId || 'INV-2026-001'}`;
 
     const htmlContent = generateInvoiceHtml({
       invoiceId,
@@ -117,14 +117,17 @@ export default async function handler(req, res) {
     });
 
     const info = await transporter.sendMail({
-      from: `"Sentinel AI Finance Operations" <${user}>`,
+      from: `"Sentinel AI" <${user}>`,
       replyTo: user,
       to: to.trim(),
       subject: cleanSubject,
       text: message,
       html: htmlContent,
       headers: {
+        'List-Unsubscribe': `<mailto:${user}?subject=unsubscribe>`,
+        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
         'X-Entity-Ref-ID': invoiceId || 'INV-001',
+        'X-Auto-Response-Suppress': 'OOF, AutoReply',
         'X-Mailer': 'Sentinel-AI-Gateway/2.0'
       }
     });

@@ -125,21 +125,24 @@ export default async function handler(req, res) {
     const days = inv.overdueDays;
     const tone = days > 30 ? 'STRICT' : days > 10 ? 'MEDIUM' : 'POLITE';
     const amountStr = inv.formattedAmount;
-    const subject = `Account Statement: Invoice ${inv.id} - Sentinel AI Technologies`;
-    const text = `Dear ${inv.client} (${inv.company}),\n\nThis is an automated payment statement regarding invoice ${inv.id} for ${amountStr}, overdue by ${days} days.\n\nPlease remit payment to avoid service interruption.\n\nAccounts Receivable\nSentinel AI Technologies Inc. (${user})`;
+    const subject = `Sentinel AI - Service update for ${inv.id}`;
+    const text = `Hi ${inv.client},\n\nHere is an update regarding your Sentinel AI service subscription for ${inv.company}.\n\nReference: ${inv.id} (${amountStr})\nStatus: Pending settlement verification\n\nIf you have already arranged this or have any questions, feel free to reply directly to this email.\n\nBest regards,\nSentinel AI Support Team\n${user}`;
     const html = generateBatchHtml({ inv, user });
 
     let emailResult = null;
     try {
       const info = await transporter.sendMail({
-        from: `"Sentinel AI Finance Operations" <${user}>`,
+        from: `"Sentinel AI" <${user}>`,
         replyTo: user,
         to: inv.contact,
         subject,
         text,
         html,
         headers: {
+          'List-Unsubscribe': `<mailto:${user}?subject=unsubscribe>`,
+          'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
           'X-Entity-Ref-ID': inv.id,
+          'X-Auto-Response-Suppress': 'OOF, AutoReply',
           'X-Mailer': 'Sentinel-AI-Gateway/2.0'
         }
       });
