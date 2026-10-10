@@ -31,7 +31,7 @@ export default function TelemetryStream({ className = '' }) {
           time: now,
           type: 'THREAT',
           status: 'BLOCKED',
-          text: `Risk prompt by "${inc.userName || 'User'}" at ${now} intercepted. SecOps Analyst notified.`,
+          text: `🚨 Jailbreak by "${inc.userName || 'Anlin Punne'}" at ${now} intercepted: "${(inc.rawPayload || '').slice(0, 40)}...". Alert dispatched to Alex Mercer.`,
           tone: 'rose',
         },
         ...prev.slice(0, 7),

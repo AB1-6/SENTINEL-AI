@@ -44,7 +44,13 @@ export default function Topbar() {
     return () => document.removeEventListener('click', onNotifDoc);
   }, []);
 
-  const unreadCount = notifs.filter((n) => !n.read).length;
+  const isAnalystOrAdmin =
+    user?.role === 'Security Analyst' ||
+    user?.role === 'Super Administrator' ||
+    user?.email === 'alex.mercer@sentinel.local' ||
+    user?.email === 'anlinpunneli@gmail.com';
+
+  const visibleUnreadCount = isAnalystOrAdmin ? unreadCount : 0;
 
   useEffect(() => {
     function onDoc(e) {
@@ -154,12 +160,12 @@ export default function Topbar() {
               playClickSound();
               setNotifsOpen((v) => !v);
             }}
-            title="SecOps Threat Notifications"
+            title={isAnalystOrAdmin ? "SecOps Threat Notifications (Alex Mercer)" : "Zero-Trust System Status"}
           >
             <div className="notif-icon-wrap relative flex items-center">
-              <Bell className={`h-4.5 w-4.5 ${unreadCount > 0 ? 'text-cyan-300' : 'text-slate-400'}`} />
-              {unreadCount > 0 ? (
-                <span className="notif-badge animate-pulse bg-rose-500 font-bold">{unreadCount}</span>
+              <Bell className={`h-4.5 w-4.5 ${visibleUnreadCount > 0 ? 'text-cyan-300' : 'text-slate-400'}`} />
+              {visibleUnreadCount > 0 ? (
+                <span className="notif-badge animate-pulse bg-rose-500 font-bold">{visibleUnreadCount}</span>
               ) : (
                 <span className="notif-badge bg-slate-700 text-slate-400 font-medium">0</span>
               )}
@@ -167,8 +173,25 @@ export default function Topbar() {
           </GlassCard>
 
           {/* Floating SecOps Analyst Alert Dropdown */}
-          {notifsOpen && (
-            <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 rounded-2xl border border-cyan-500/30 bg-slate-950/95 p-4 shadow-2xl backdrop-blur-xl z-50 animate-fade-in text-xs">
+          {notifsOpen && !isAnalystOrAdmin && (
+            <div className="absolute right-0 top-full mt-2 w-72 rounded-2xl border border-slate-800 bg-slate-950/95 p-4 shadow-2xl backdrop-blur-xl z-50 animate-fade-in text-xs">
+              <div className="flex items-center gap-2">
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                  <ShieldCheck className="h-4 w-4" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-white text-xs">Zero-Trust Workspace</h4>
+                  <p className="text-[10px] text-emerald-400">All guardrails active & nominal</p>
+                </div>
+              </div>
+              <p className="mt-2.5 text-[11px] text-slate-400 leading-relaxed font-mono">
+                No policy violations detected. Workspace sessions operating within standard compliance.
+              </p>
+            </div>
+          )}
+
+          {notifsOpen && isAnalystOrAdmin && (
+            <div className="absolute right-0 top-full mt-2 w-84 sm:w-[420px] rounded-2xl border border-rose-500/30 bg-slate-950/95 p-4 shadow-2xl backdrop-blur-xl z-50 animate-fade-in text-xs">
               <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                 <div className="flex items-center gap-2">
                   <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-500/20 text-rose-400 border border-rose-500/30">
@@ -176,10 +199,10 @@ export default function Topbar() {
                   </div>
                   <div>
                     <h4 className="font-bold text-white text-xs">Security Analyst Threat Feed</h4>
-                    <p className="text-[10px] text-cyan-300">Live dispatched to Alex Mercer (SecOps)</p>
+                    <p className="text-[10px] text-rose-300 font-mono">Live dispatched to Alex Mercer (SecOps Level 4)</p>
                   </div>
                 </div>
-                {unreadCount > 0 && (
+                {visibleUnreadCount > 0 && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -194,21 +217,21 @@ export default function Topbar() {
               </div>
 
               {/* Notification list */}
-              <div className="mt-3 max-h-72 space-y-2 overflow-y-auto pr-1">
+              <div className="mt-3 max-h-80 space-y-2.5 overflow-y-auto pr-1">
                 {notifs.length === 0 ? (
                   <div className="p-4 text-center text-slate-500 font-mono text-[11px]">
                     No security threats recorded. Zero-Trust perimeter active.
                   </div>
                 ) : (
-                  notifs.slice(0, 10).map((n) => (
+                  notifs.slice(0, 8).map((n) => (
                     <div
                       key={n.id}
                       onClick={() => {
                         markAnalystNotificationRead(n.id);
                         setNotifsOpen(false);
-                        navigate('/');
+                        navigate('/notifications');
                       }}
-                      className={`group cursor-pointer rounded-xl border p-2.5 transition ${
+                      className={`group cursor-pointer rounded-xl border p-3 transition ${
                         n.read
                           ? 'border-slate-800/60 bg-slate-900/40 opacity-75'
                           : 'border-rose-500/30 bg-rose-950/20 hover:border-rose-500/60'
@@ -221,38 +244,53 @@ export default function Topbar() {
                           {n.severity}
                         </span>
                         <span className="text-[10px] text-slate-400 font-mono flex items-center gap-1">
-                          <Clock className="h-2.5 w-2.5" /> {n.time || n.exactTime}
+                          <Clock className="h-2.5 w-2.5" /> {n.incidentTime || n.formattedTime || n.time}
                         </span>
                       </div>
 
-                      <div className="mt-1 flex items-center gap-1.5 text-[11px]">
-                        <User className="h-3 w-3 text-sky-400" />
-                        <span className="font-semibold text-white">{n.userName || 'Unknown User'}</span>
-                        <span className="text-[10px] text-slate-400">({n.userRole || 'Standard'})</span>
+                      <div className="mt-1.5 flex items-center gap-1.5 text-[11px]">
+                        <User className="h-3 w-3 text-rose-400" />
+                        <span className="text-[10px] text-rose-400 font-mono font-bold">User Flagged:</span>
+                        <span className="font-semibold text-white truncate">{n.userFlagged || `${n.userName} (${n.userRole})`}</span>
                       </div>
 
-                      {n.promptSnippet && (
-                        <p className="mt-1 font-mono text-[10px] text-slate-300 bg-black/40 rounded p-1.5 border border-white/5 line-clamp-2">
-                          "{n.promptSnippet}"
-                        </p>
+                      {(n.rawPayload || n.promptSnippet) && (
+                        <div className="mt-1.5 font-mono text-[10px] text-rose-200 bg-black/60 rounded p-2 border border-rose-500/20 line-clamp-2">
+                          <span className="text-rose-400 font-bold mr-1">Prompt Typed:</span>
+                          "{n.rawPayload || n.promptSnippet}"
+                        </div>
                       )}
 
-                      <div className="mt-1.5 flex items-center justify-between text-[10px]">
-                        <span className="text-emerald-400 font-mono">Notified: Security Analyst</span>
-                        <span className="text-sky-400 group-hover:underline">Inspect ➔</span>
+                      <div className="mt-1.5 flex flex-wrap items-center justify-between gap-1 text-[10px] font-mono">
+                        <span className="text-emerald-400 flex items-center gap-1">
+                          <ShieldCheck className="h-2.5 w-2.5 text-emerald-400" /> Dispatched to Alex Mercer
+                        </span>
+                        <span className="text-sky-300 font-bold">
+                          Risk: {n.riskScore || 87}/100
+                        </span>
                       </div>
                     </div>
                   ))
                 )}
               </div>
 
-              <div className="mt-3 border-t border-slate-800 pt-2 text-center">
+              <div className="mt-3 border-t border-slate-800 pt-2.5 space-y-1.5 text-center">
+                <button
+                  onClick={() => {
+                    setNotifsOpen(false);
+                    navigate('/notifications');
+                  }}
+                  className="w-full rounded-xl bg-rose-500/20 border border-rose-500/40 py-2 text-xs font-bold text-rose-300 hover:bg-rose-500/30 transition flex items-center justify-center gap-1.5"
+                >
+                  <Bell className="h-3.5 w-3.5 text-rose-400" />
+                  Open Full SecOps Notifications Menu ➔
+                </button>
                 <button
                   onClick={() => {
                     setNotifsOpen(false);
                     navigate('/');
                   }}
-                  className="w-full rounded-xl bg-sky-500/20 border border-sky-500/30 py-1.5 text-[11px] font-semibold text-sky-300 hover:bg-sky-500/30 transition"
+                  className="w-full rounded-xl bg-slate-900 border border-slate-800 py-1.5 text-[11px] font-medium text-slate-400 hover:text-white transition"
                 >
                   View Threat Incident Response Table
                 </button>

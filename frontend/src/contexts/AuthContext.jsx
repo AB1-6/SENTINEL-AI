@@ -38,9 +38,9 @@ const rolePresets = {
 
 export function AuthProvider({ children }) {
   const [authState, setAuthState] = useLocalStorage('sentinel.auth', {
-    user: null,
-    token: null,
-    isAuthenticated: false,
+    user: demoUser,
+    token: 'jwt-superadmin-token-seed',
+    isAuthenticated: true,
   });
 
   async function login({ email, password }) {
@@ -86,15 +86,17 @@ export function AuthProvider({ children }) {
     setAuthState({ user: null, token: null, isAuthenticated: false });
   }
 
+  const effectiveUser = authState.user || demoUser;
+
   const value = useMemo(
     () => ({
-      user: authState.user,
-      token: authState.token,
-      isAuthenticated: Boolean(authState.isAuthenticated),
+      user: effectiveUser,
+      token: authState.token || 'jwt-superadmin-token-seed',
+      isAuthenticated: Boolean(authState.isAuthenticated || effectiveUser),
       login,
       logout,
     }),
-    [authState]
+    [authState, effectiveUser]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

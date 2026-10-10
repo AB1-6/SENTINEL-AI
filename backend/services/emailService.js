@@ -19,15 +19,17 @@ export function getTransporter() {
 
   const host = process.env.SMTP_HOST || 'smtp.gmail.com';
   const port = parseInt(process.env.SMTP_PORT || '587', 10);
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
+  const user = (process.env.SMTP_USER || 'sentinalai2.0@gmail.com').trim();
+  const rawPass = (process.env.SMTP_PASS || 'wwmijcbttkxwdhst').trim();
+  const pass = rawPass.replace(/\s+/g, '');
 
   if (user && pass) {
     transporter = nodemailer.createTransport({
       host,
       port,
       secure: port === 465,
-      auth: { user, pass }
+      auth: { user, pass },
+      tls: { rejectUnauthorized: false }
     });
     console.log(`[Sentinel AI] Outbound SMTP configured for ${user} via ${host}:${port}`);
   } else {
@@ -50,7 +52,8 @@ export async function sendInvoiceOutreachEmail({ to, subject, text, clientName, 
   }
 
   try {
-    const fromAddress = process.env.SMTP_FROM || `"Sentinel AI Finance Ops" <${process.env.SMTP_USER}>`;
+    const activeUser = (process.env.SMTP_USER || 'sentinalai2.0@gmail.com').trim();
+    const fromAddress = process.env.SMTP_FROM || `"Sentinel AI Finance Ops" <${activeUser}>`;
     const info = await mailer.sendMail({
       from: fromAddress,
       to,

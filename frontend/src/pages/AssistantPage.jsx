@@ -317,32 +317,36 @@ export default function AssistantPage() {
       playErrorSound();
 
       const userEmail = currentUser?.email || 'employee@sentinel.local';
-      const userName = currentUser?.name || (currentUser?.email ? currentUser.email.split('@')[0] : 'David Kim');
+      const userName = currentUser?.name || 'David Kim';
       const userRole = currentUser?.role || 'Standard Employee';
       const timeStr = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
       const dateStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      const formattedIncidentTime = `${dateStr} • ${timeStr}`;
 
-      // Record to centralized Threat System Incident Response
+      const violResult = recordViolation(userEmail, processedPrompt, classification);
+      const strikesFormatted = violResult.suspended
+        ? '3/3 Violations — 🚨 ACCOUNT SUSPENDED'
+        : `${violResult.strikes || 1}/3 Violations — Warning Recorded`;
+
+      // Record to centralized Threat System Incident Response & live-notify Security Analyst (Alex Mercer)
       const loggedIncident = recordThreatIncident({
-        prompt: processedPrompt,
+        prompt: promptText,
         user: currentUser || { name: userName, email: userEmail, role: userRole },
         classification,
         score: riskScore,
         source: 'Assistant Chat Gateway',
         rule: `RULE-GATEWAY-BLOCK_${classification.label || 'JAILBREAK'}`,
-        action: 'HARD_DROP & AUDIT_LOG',
+        action: 'Zero-Trust gateway intercepted request prior to neural model transmission',
         ip: '198.51.100.42',
         severity: riskScore >= 80 ? 'CRITICAL' : 'HIGH',
+        strikesText: strikesFormatted,
+        exactFormattedTime: formattedIncidentTime,
       });
-
-      const violResult = recordViolation(userEmail, processedPrompt, classification);
 
       // Live notification feedback to user and Security Analyst
       const isAnalyst = currentUser?.role === 'Security Analyst' || userEmail === 'alex.mercer@sentinel.local';
       if (isAnalyst) {
-        pushToast(`🚨 [SecOps Alert] Risk prompt from ${userName} (${riskScore}/100) intercepted! Incident #${loggedIncident.id} logged.`, 'danger');
-      } else if (violResult.isSuperAdmin) {
-        pushToast(`🚨 Zero-Trust Interception: Prompt blocked! Security Analyst (Alex Mercer) live-notified. Logged as #${loggedIncident.id}.`, 'danger');
+        pushToast(`🚨 [SecOps Alert] Risk prompt from ${userName} (${riskScore}/100) intercepted! Dispatched to notifications.`, 'danger');
       } else if (violResult.suspended) {
         pushToast(`🛑 Zero-Trust Quarantine: 3/3 Violations Reached! Account Locked. Incident #${loggedIncident.id} logged.`, 'danger');
         setQuarantineModal({
@@ -353,17 +357,22 @@ export default function AssistantPage() {
         });
         setLogoutCountdown(5);
       } else if (violResult.strikes === 2) {
-        pushToast(`🚨 Strike 2/3 Recorded! Next violation will trigger quarantine. Incident #${loggedIncident.id} logged with Security Analyst.`, 'danger');
+        pushToast(`⚠️ Strike 2/3 Recorded! Next violation will trigger quarantine.`, 'warning');
       } else {
-        pushToast(`⚠️ Strike 1/3 Recorded: Prompt risk intercepted & live-notified to Security Analyst (Alex Mercer). Incident #${loggedIncident.id}.`, 'warning');
+        pushToast(`⚠️ Request blocked by Zero-Trust gateway: Policy violation intercepted (Strike ${violResult.strikes || 1}/3).`, 'warning');
       }
+
+      // User requested: Clean rejection in chat (internal SecOps telemetry is routed exclusively to Security Analyst notifications)
+      const chatBlockedContent = violResult.suspended
+        ? `### 🛑 Account Suspended — Zero-Trust Quarantine\n\nYour account has reached the maximum threshold of **3 security violations** and has been quarantined.\n\nPlease contact your system administrator (**anlinpunneli@gmail.com**) for readmission.\n\n*All activity has been securely logged for enterprise compliance.*`
+        : `### 🛡️ Request Blocked by Zero-Trust Gateway\n\n**Zero-Trust Policy Violation Detected**\n\nYour prompt was intercepted by Sentinel's safety guardrails because it matches an adversarial prompt injection or safety policy violation pattern.\n\n*This request has been blocked prior to neural model transmission and logged for compliance.*`;
 
       setMessages((current) => {
         const next = [
           ...current, 
           { 
             role: 'assistant', 
-            content: `### 🛡️ Request Blocked by Zero-Trust Gateway\n\n**Security Reason**: Potential prompt injection or adversarial jailbreak pattern detected.\n- **User Flagged**: \`${userName}\` (${userRole})\n- **Incident Time**: \`${dateStr} • ${timeStr}\`\n- **Incident ID**: \`${loggedIncident.id}\` (Logged to Threat System Incident Response)\n- **Live SecOps Alert**: 🚨 Live-notified to **Alex Mercer (Security Analyst - SecOps Level 4)**\n- **Risk Score**: \`${riskScore}/100\`\n- **Classification**: \`${classification.label}\`\n- **Zero-Trust Strikes**: \`${violResult.strikes || 1}/3 Violations\` ${violResult.suspended ? '— 🚨 **ACCOUNT SUSPENDED**' : '— Warning Recorded'}\n- **Policy Action**: Zero-Trust gateway intercepted request prior to neural model transmission.\n\n${violResult.suspended ? '**CRITICAL NOTICE**: Your account has exceeded the 3-violation threshold and has been suspended. Only a Super Administrator (anlinpunneli@gmail.com) can readmit this account.' : `*Incident has been logged to the Threat System Incident Response with User: "${userName}" at ${timeStr}. Live-notified to Security Analyst.*`}`,
+            content: chatBlockedContent,
             meta: {
               verified: false,
               blocked: true,
@@ -385,8 +394,8 @@ export default function AssistantPage() {
 
     if (!isBlocked && riskScore >= 40) {
       recordThreatIncident({
-        prompt: processedPrompt,
-        user: currentUser || { name: currentUser?.name || 'David Kim', email: currentUser?.email || 'employee@sentinel.local', role: currentUser?.role || 'Standard Employee' },
+        prompt: promptText,
+        user: currentUser || { name: 'Anlin Punne', email: 'anlinpunneli@gmail.com', role: 'Super Administrator' },
         classification,
         score: riskScore,
         source: 'Assistant Chat Gateway',

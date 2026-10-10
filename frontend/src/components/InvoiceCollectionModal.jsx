@@ -93,10 +93,12 @@ export default function InvoiceCollectionModal({ isOpen, onClose, invoice }) {
     playClickSound();
     setSending(true);
 
-    // Call backend API for record keeping
+    let deliveredViaSmtp = false;
+
+    // Call backend API for 1-Click Silent Delivery
     try {
       const apiEndpoint = 'http://localhost:8080/api/financial/send-invoice-notice';
-      await fetch(apiEndpoint, {
+      const res = await fetch(apiEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -125,15 +127,28 @@ export default function InvoiceCollectionModal({ isOpen, onClose, invoice }) {
           })
         });
       });
+
+      if (res && res.ok) {
+        const data = await res.json();
+        if (data.emailResult?.success) {
+          deliveredViaSmtp = true;
+        }
+      }
     } catch (e) {
       console.warn('Backend notice sync:', e);
     }
 
-    // Automatically open real Gmail Web or WhatsApp pre-filled!
     if (channel === 'email') {
-      window.open(gmailLink, '_blank');
+      if (deliveredViaSmtp) {
+        pushToast(`⚡ 1-Click Delivery SUCCESS: Real email delivered to ${clientEmail}!`, 'success');
+      } else {
+        // Fallback to Gmail Web Compose if backend is disconnected
+        window.open(gmailLink, '_blank');
+        pushToast(`Outreach launched for ${clientName}! Notice prepared for 1-click delivery.`, 'success');
+      }
     } else {
       window.open(whatsappWebLink, '_blank');
+      pushToast(`Outreach launched for ${clientName}! Opened WhatsApp with notice pre-filled.`, 'success');
     }
 
     setSending(false);
@@ -144,12 +159,9 @@ export default function InvoiceCollectionModal({ isOpen, onClose, invoice }) {
       phone: clientPhone,
       channel: channel.toUpperCase(),
       tone: tone.toUpperCase(),
-      timestamp: new Date().toLocaleTimeString()
+      timestamp: new Date().toLocaleTimeString(),
+      deliveredViaSmtp
     });
-    pushToast(
-      `Outreach launched for ${clientName}! Opened ${channel === 'email' ? 'Gmail Web' : 'WhatsApp'} with your notice pre-filled.`,
-      'success'
-    );
   };
 
   return (

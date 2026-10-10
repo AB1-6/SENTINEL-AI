@@ -24,6 +24,7 @@ const SecurityCenterPage = lazy(() => import('@/pages/SecurityCenterPage'));
 const UserManagementPage = lazy(() => import('@/pages/UserManagementPage'));
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
 const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
+const SecOpsNotificationsPage = lazy(() => import('@/pages/SecOpsNotificationsPage'));
 
 function BootLoader({ children }) {
   const [booted, setBooted] = useState(false);
@@ -72,6 +73,7 @@ export default function App() {
                         <Route path="documents" element={<DocumentsPage />} />
                         <Route path="history" element={<ChatHistoryPage />} />
                         <Route path="security" element={<SecurityCenterPage />} />
+                        <Route path="notifications" element={<SecOpsNotificationsPage />} />
                         <Route path="users" element={<UserManagementPage />} />
                         <Route path="settings" element={<SettingsPage />} />
                         <Route path="profile" element={<ProfilePage />} />

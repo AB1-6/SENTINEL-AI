@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import RotatingShield from './RotatingShield';
 import SecurityDiagnosticModal from './SecurityDiagnosticModal';
 import AdminControlModal from './AdminControlModal';
-import { LayoutDashboard, Bot, Folder, MessageSquareText, ShieldCheck, Users, Settings2, ShieldAlert, LogOut, Wallet, Layers } from 'lucide-react';
+import { LayoutDashboard, Bot, Folder, MessageSquareText, ShieldCheck, Users, Settings2, ShieldAlert, LogOut, Wallet, Layers, Bell } from 'lucide-react';
 import { playChimeSound, playClickSound } from '@/utils/soundEffects';
 import { useAuth } from '@/contexts/AuthContext';
+import { getAnalystNotifications, subscribeAnalystNotifications } from '@/services/incidentResponseService';
 
 const navItems = [
   { label: 'Dashboard', to: '/', icon: LayoutDashboard },
@@ -24,6 +25,18 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const [diagOpen, setDiagOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
+  const [notifications, setNotifications] = useState(() => getAnalystNotifications());
+
+  useEffect(() => {
+    return subscribeAnalystNotifications((updated) => setNotifications(updated));
+  }, []);
+
+  const unreadNotifs = notifications.filter((n) => !n.read).length;
+  const isAnalystOrAdmin =
+    user?.role === 'Security Analyst' ||
+    user?.role === 'Super Administrator' ||
+    user?.email === 'alex.mercer@sentinel.local' ||
+    user?.email === 'anlinpunneli@gmail.com';
 
   const handleHeaderClick = () => {
     playChimeSound();
@@ -67,21 +80,50 @@ export default function Sidebar() {
 
         <nav className="mt-4 space-y-1">
           {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.to === '/'}
-              className={({ isActive }) =>
-                `group flex items-center gap-2.5 rounded-xl border px-3 py-2 text-[13.5px] font-medium transition-all duration-150 ${
-                  isActive
-                    ? 'border-sky-500/30 bg-sky-500/10 text-sky-400 font-semibold shadow-sm'
-                    : 'border-transparent text-slate-400 hover:border-slate-800 hover:bg-slate-900/60 hover:text-slate-100'
-                }`
-              }
-            >
-              <item.icon className="h-4 w-4 shrink-0 text-slate-400 transition-colors group-hover:text-sky-300" />
-              <span className="truncate">{item.label}</span>
-            </NavLink>
+            <div key={item.to}>
+              <NavLink
+                to={item.to}
+                end={item.to === '/'}
+                className={({ isActive }) =>
+                  `group flex items-center gap-2.5 rounded-xl border px-3 py-2 text-[13.5px] font-medium transition-all duration-150 ${
+                    isActive
+                      ? 'border-sky-500/30 bg-sky-500/10 text-sky-400 font-semibold shadow-sm'
+                      : 'border-transparent text-slate-400 hover:border-slate-800 hover:bg-slate-900/60 hover:text-slate-100'
+                  }`
+                }
+              >
+                <item.icon className="h-4 w-4 shrink-0 text-slate-400 transition-colors group-hover:text-sky-300" />
+                <span className="truncate">{item.label}</span>
+              </NavLink>
+
+              {/* Exclusive SecOps Notifications Menu for Security Analyst & Super Admin */}
+              {item.to === '/security' && isAnalystOrAdmin && (
+                <NavLink
+                  to="/notifications"
+                  className={({ isActive }) =>
+                    `mt-1 group flex items-center justify-between rounded-xl border px-3 py-2 text-[13.5px] font-medium transition-all duration-150 ${
+                      isActive
+                        ? 'border-rose-500/40 bg-rose-500/15 text-rose-300 font-semibold shadow-sm'
+                        : 'border-transparent text-slate-300 hover:border-rose-500/30 hover:bg-rose-950/20 hover:text-rose-200'
+                    }`
+                  }
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <Bell className="h-4 w-4 shrink-0 text-rose-400 group-hover:text-rose-300" />
+                    <span className="truncate">SecOps Notifications</span>
+                  </div>
+                  {unreadNotifs > 0 ? (
+                    <span className="flex h-5 items-center justify-center rounded-full bg-rose-500/20 border border-rose-500/40 px-1.5 font-mono text-[10px] font-bold text-rose-300 animate-pulse">
+                      {unreadNotifs}
+                    </span>
+                  ) : (
+                    <span className="rounded bg-slate-800/80 px-1.5 py-0.5 font-mono text-[9px] text-slate-500">
+                      0
+                    </span>
+                  )}
+                </NavLink>
+              )}
+            </div>
           ))}
 
           {/* Role-Specific Sidebar Features */}
