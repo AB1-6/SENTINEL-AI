@@ -1,4 +1,4 @@
-import { Bell, ChevronDown, Search, Sparkles, Shield, Zap, Volume2, VolumeX, ShieldAlert, LogOut, CheckCheck, Clock, User, AlertOctagon } from 'lucide-react';
+import { Bell, ChevronDown, Search, Sparkles, Shield, Zap, Volume2, VolumeX, ShieldAlert, LogOut, CheckCheck, Clock, User, AlertOctagon, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAiProvider } from '@/contexts/AiProviderContext';
@@ -50,6 +50,7 @@ export default function Topbar() {
     user?.email === 'alex.mercer@sentinel.local' ||
     user?.email === 'anlinpunneli@gmail.com';
 
+  const unreadCount = (notifs || []).filter((n) => !n.read).length;
   const visibleUnreadCount = isAnalystOrAdmin ? unreadCount : 0;
 
   useEffect(() => {
