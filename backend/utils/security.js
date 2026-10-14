@@ -69,7 +69,7 @@ const jailbreakPatterns = [
 
 const riskyKeywords = ['password', 'credential', 'secret key', 'api key', 'private key', 'exfiltrate'];
 
-export function calculatePromptRisk(prompt = '') {
+export function calculatePromptRisk(prompt = '', history = []) {
   const normalized = (prompt || '').trim().toLowerCase();
   if (!normalized) {
     return { score: 0.05, label: 'SAFE', reason: 'Empty prompt' };
@@ -78,6 +78,7 @@ export function calculatePromptRisk(prompt = '') {
   let score = 0.04;
   const reasons = [];
 
+  // Single-turn pattern matching
   jailbreakPatterns.forEach((item) => {
     if (item.pattern.test(prompt)) {
       score = Math.max(score, 0.85);
@@ -95,6 +96,26 @@ export function calculatePromptRisk(prompt = '') {
   if (prompt.length > 800) {
     score += 0.1;
     reasons.push('High token volume payload');
+  }
+
+  // Multi-Turn Sliding-Window Context Analysis (Crescendo Attack Defense)
+  if (Array.isArray(history) && history.length > 0) {
+    const recentUserTurns = history
+      .filter((msg) => msg && (msg.role === 'user' || msg.sender === 'user'))
+      .slice(-3)
+      .map((msg) => (typeof msg.content === 'string' ? msg.content.toLowerCase() : ''));
+
+    const combinedContext = [...recentUserTurns, normalized].join(' ');
+    
+    // Check if user is gradually guiding the model into revealing restricted data
+    const hasReconnaissance = /(?:salary|salaries|credentials|passwords|database|schema|users|auth|tokens|internal|secrets)/i.test(combinedContext);
+    const hasExfiltrationAction = /(?:dump|leak|extract|print|show\s+all|export|give\s+me|reveal|unmask)/i.test(normalized);
+    const hasOverrideAttempt = /(?:now|disregard|override|as\s+said|previous|rule|exception)/i.test(normalized);
+
+    if (recentUserTurns.length >= 2 && hasReconnaissance && (hasExfiltrationAction || hasOverrideAttempt)) {
+      score = Math.max(score, 0.82);
+      reasons.push('Multi-Turn Crescendo Context Escalation (OWASP LLM01)');
+    }
   }
 
   score = Math.min(score, 0.99);

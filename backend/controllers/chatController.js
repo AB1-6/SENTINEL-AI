@@ -3,6 +3,8 @@ import { createRecord, listCollection, removeRecord, updateRecord } from '../ser
 import { evaluatePrompt } from '../services/securityService.js';
 import { generateAiResponse as generateGeminiResponse } from '../services/geminiService.js';
 import { generateGemmaResponse } from '../services/gemmaService.js';
+import { generateOllamaResponse } from '../services/ollamaService.js';
+import { redactOutputSecrets } from '../utils/outputDlp.js';
 import { successResponse } from '../utils/response.js';
 import { HttpError } from '../utils/httpError.js';
 
@@ -16,6 +18,7 @@ export const sendChat = asyncHandler(async (req, res) => {
     userId: req.user?._id || req.body.userId, 
     userName: req.user?.name || req.body.userName || 'David Kim',
     userRole: req.user?.role || req.body.userRole || 'Standard Employee',
+    history,
     route: '/api/chat', 
     ip: req.ip 
   });
@@ -25,13 +28,26 @@ export const sendChat = asyncHandler(async (req, res) => {
   }
 
   // Determine desired provider: request body -> env AI_PROVIDER -> default gemini
-  const requested = req.body.provider || process.env.AI_PROVIDER || 'gemini';
+  const requested = (req.body.provider || process.env.AI_PROVIDER || 'gemini').toLowerCase();
   let response;
-  if (requested === 'gemma') {
+  if (requested === 'ollama') {
+    response = await generateOllamaResponse(prompt, { history, documentNames });
+  } else if (requested === 'gemma') {
     response = await generateGemmaResponse(prompt, { history, documentNames, apiKey: passedKey });
   } else {
     response = await generateGeminiResponse(prompt, { history, documentNames, apiKey: passedKey });
   }
+
+  // Bidirectional Output DLP Guardrail (Egress Sanitization)
+  const dlpResult = redactOutputSecrets(response.text || '');
+  response.text = dlpResult.text;
+  response.outputDlp = {
+    scanned: true,
+    wasRedacted: dlpResult.wasRedacted,
+    redactedTypes: dlpResult.redactedTypes,
+    totalRedactions: dlpResult.totalRedactions,
+  };
+
   const historyEntry = {
     userId: req.user?._id || 'anonymous',
     title: prompt.slice(0, 48) || 'New Conversation',
@@ -45,8 +61,9 @@ export const sendChat = asyncHandler(async (req, res) => {
   };
 
   const chat = conversationId ? updateRecord('chats', conversationId, historyEntry) : createRecord('chats', historyEntry);
-  successResponse(res, { chat, response, security }, 'Chat response generated');
+  successResponse(res, { chat, response, security, outputDlp: response.outputDlp }, 'Chat response generated');
 });
+
 
 export const getKeyStatus = asyncHandler(async (_req, res) => {
   const envKey = process.env.GEMINI_API_KEY || '';

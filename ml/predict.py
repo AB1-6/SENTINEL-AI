@@ -1,10 +1,12 @@
-from __future__ import annotations
-
 import json
 import sys
+import warnings
 from pathlib import Path
 
+warnings.filterwarnings('ignore')
+
 import joblib
+
 
 
 BASE_DIR = Path(__file__).resolve().parent

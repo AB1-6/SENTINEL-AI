@@ -2,7 +2,8 @@ import { calculatePromptRisk } from '../utils/security.js';
 import { createRecord, listCollection } from './dataStore.js';
 
 export function evaluatePrompt(prompt, context = {}) {
-  const result = calculatePromptRisk(prompt);
+  const result = calculatePromptRisk(prompt, context.history || []);
+
   const severity = result.score >= 0.8 ? 'critical' : result.score >= 0.6 ? 'high' : result.score >= 0.35 ? 'medium' : 'low';
   const now = new Date().toISOString();
   const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });

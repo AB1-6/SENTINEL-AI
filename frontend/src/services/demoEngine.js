@@ -91,7 +91,7 @@ const threatRules = [
 /**
  * Classifies prompt for zero-trust security threats.
  */
-export function classifyPrompt(prompt = '') {
+export function classifyPrompt(prompt = '', history = []) {
   const normalized = (prompt || '').trim();
   if (!normalized) {
     return { score: 0.04, label: 'SAFE', reason: 'Empty prompt' };
@@ -114,12 +114,35 @@ export function classifyPrompt(prompt = '') {
     };
   }
 
+  // Multi-Turn Sliding-Window Context Analysis (Crescendo Attack Defense)
+  if (Array.isArray(history) && history.length > 0) {
+    const recentUserTurns = history
+      .filter((msg) => msg && (msg.role === 'user' || msg.sender === 'user'))
+      .slice(-3)
+      .map((msg) => (typeof msg.content === 'string' ? msg.content.toLowerCase() : ''));
+
+    const combinedContext = [...recentUserTurns, normalized.toLowerCase()].join(' ');
+    const hasReconnaissance = /(?:salary|salaries|credentials|passwords|database|schema|users|auth|tokens|internal|secrets)/i.test(combinedContext);
+    const hasExfiltrationAction = /(?:dump|leak|extract|print|show\s+all|export|give\s+me|reveal|unmask)/i.test(normalized.toLowerCase());
+    const hasOverrideAttempt = /(?:now|disregard|override|as\s+said|previous|rule|exception)/i.test(normalized.toLowerCase());
+
+    if (recentUserTurns.length >= 2 && hasReconnaissance && (hasExfiltrationAction || hasOverrideAttempt)) {
+      return {
+        score: 0.88,
+        label: 'JAILBREAK',
+        reason: 'Zero-Trust threat detected: Multi-Turn Crescendo Context Escalation (OWASP LLM01)',
+        threats: ['Multi-Turn Crescendo Context Escalation'],
+      };
+    }
+  }
+
   return {
     score: 0.04,
     label: 'SAFE',
     reason: 'Zero-Trust AST security verification passed',
   };
 }
+
 
 /**
  * Checks conversation history to resolve contextual pronouns or follow-ups.
